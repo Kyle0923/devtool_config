@@ -1,0 +1,22 @@
+{
+    "editor.renderFinalNewline": "off",
+    "editor.renderWhitespace": "boundary",
+    "[cpp]": {
+        "editor.wordBasedSuggestions": false,
+        "editor.suggest.insertMode": "replace",
+        "editor.semanticHighlighting.enabled": true
+    },
+    "[python]": {
+        "editor.formatOnType": true
+    },
+    "files.autoSave": "afterDelay",
+    "files.trimTrailingWhitespace": true,
+    "security.workspace.trust.untrustedFiles": "open",
+    "terminal.integrated.defaultProfile.windows": "Git Bash",
+    "editor.stickyScroll.enabled": true,
+    "workbench.tree.enableStickyScroll": true,
+    "workbench.colorCustomizations": {
+        "editorStickyScroll.background": "#212f6b",
+        "peekViewEditorStickyScroll.background": "#212f6b"
+    }
+}
