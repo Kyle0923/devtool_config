@@ -1,22 +1,32 @@
 {
-    "editor.renderFinalNewline": "off",
+    "workbench.colorTheme": "Default Dark Modern",
     "editor.renderWhitespace": "boundary",
+    "security.workspace.trust.untrustedFiles": "open",
     "[cpp]": {
-        "editor.wordBasedSuggestions": false,
+        "editor.wordBasedSuggestions": "off",
         "editor.suggest.insertMode": "replace",
         "editor.semanticHighlighting.enabled": true
     },
     "[python]": {
         "editor.formatOnType": true
     },
+    "[markdown]": {
+        "files.trimTrailingWhitespace": false
+    },
     "files.autoSave": "afterDelay",
     "files.trimTrailingWhitespace": true,
-    "security.workspace.trust.untrustedFiles": "open",
-    "terminal.integrated.defaultProfile.windows": "Git Bash",
+    "editor.renderFinalNewline": "off",
     "editor.stickyScroll.enabled": true,
     "workbench.tree.enableStickyScroll": true,
     "workbench.colorCustomizations": {
         "editorStickyScroll.background": "#212f6b",
         "peekViewEditorStickyScroll.background": "#212f6b"
-    }
+    },
+    "gitlens.codeLens.enabled": false,
+    "gitlens.hovers.currentLine.over": "line",
+    "diffEditor.ignoreTrimWhitespace": false,
+    "terminal.explorerKind": "external",
+    "terminal.integrated.cursorStyle": "line",
+    "editor.stickyScroll.defaultModel": "foldingProviderModel",
+    "editor.stickyScroll.maxLineCount": 10,
 }

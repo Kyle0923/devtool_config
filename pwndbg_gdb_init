@@ -1,0 +1,22 @@
+# rename to .gdbinit
+source /home/user/programming/pwndbg/gdbinit.py
+set context-clear-screen on
+set follow-fork-mode parent
+source /home/user/programming/splitmind/gdbinit.py
+python
+import splitmind
+(splitmind.Mind()
+  .tell_splitter(show_titles=True)
+  .tell_splitter(set_title="Main")
+  .left(of="main", display="code", size="30%", banner="none")
+  .right(of="main", cmd='tty; tail -f /dev/null', size="45%", clearing=False)
+  .tell_splitter(set_title='Input / Output')
+  .above(display="stack", size="90%")
+  .above(display="regs", size="75%")
+  .above(display="legend", size="25")
+  .show("expressions", on="legend")
+  .below(of="code", display="disasm", banner="top")
+  .below(of="disasm", display="backtrace", size="20%", banner="none")
+).build(nobanner=True)
+end
+set context-sections  "regs args code disasm stack backtrace expressions"

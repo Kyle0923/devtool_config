@@ -1,6 +1,6 @@
 alias h=history
-alias l=ls
-alias ll="ls -lha"
+alias l="ls -F"
+alias ll="ls -lhaF"
 alias gits="git status"
 alias croot='cd `git rev-parse --show-toplevel`'
 
