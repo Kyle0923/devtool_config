@@ -19,18 +19,8 @@
         "when": "editorTextFocus && foldingEnabled"
     },
     {
-        "key": "ctrl+k ctrl+0",
-        "command": "-editor.foldAll",
-        "when": "editorTextFocus && foldingEnabled"
-    },
-    {
         "key": "alt+=",
         "command": "editor.unfoldAll",
-        "when": "editorTextFocus && foldingEnabled"
-    },
-    {
-        "key": "ctrl+k ctrl+j",
-        "command": "-editor.unfoldAll",
         "when": "editorTextFocus && foldingEnabled"
     },
     {
@@ -39,13 +29,38 @@
         "when": "editorTextFocus && foldingEnabled"
     },
     {
-        "key": "ctrl+k ctrl+/",
-        "command": "-editor.foldAllBlockComments",
+        "key": "shift+alt+-",
+        "command": "editor.foldAllExcept",
         "when": "editorTextFocus && foldingEnabled"
     },
     {
-        "key": "shift+alt+-",
-        "command": "editor.foldAllExcept",
+        "key": "alt+\\",
+        "command": "editor.gotoParentFold"
+    },
+    {
+        "key": "alt+]",
+        "command": "editor.unfold",
+        "when": "editorTextFocus && foldingEnabled"
+    },
+    {
+        "key": "alt+[",
+        "command": "editor.fold",
+        "when": "editorTextFocus && foldingEnabled"
+    },
+    // remove some default bindings
+    {
+        "key": "ctrl+k ctrl+0",
+        "command": "-editor.foldAll",
+        "when": "editorTextFocus && foldingEnabled"
+    },
+    {
+        "key": "ctrl+k ctrl+j",
+        "command": "-editor.unfoldAll",
+        "when": "editorTextFocus && foldingEnabled"
+    },
+    {
+        "key": "ctrl+k ctrl+/",
+        "command": "-editor.foldAllBlockComments",
         "when": "editorTextFocus && foldingEnabled"
     },
     {
@@ -54,7 +69,13 @@
         "when": "editorTextFocus && foldingEnabled"
     },
     {
-        "key": "alt+\\",
-        "command": "editor.gotoParentFold"
-    }
+        "key": "ctrl+shift+]",
+        "command": "-editor.unfold",
+        "when": "editorTextFocus && foldingEnabled"
+    },
+    {
+        "key": "ctrl+shift+[",
+        "command": "-editor.fold",
+        "when": "editorTextFocus && foldingEnabled"
+    },
 ]
