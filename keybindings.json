@@ -14,12 +14,12 @@
         "when": "textInputFocus && !editorReadonly"
     },
     {
-        "key": "alt+-",
+        "key": "shift+alt+-",
         "command": "editor.foldAll",
         "when": "editorTextFocus && foldingEnabled"
     },
     {
-        "key": "alt+=",
+        "key": "shift+alt+=",
         "command": "editor.unfoldAll",
         "when": "editorTextFocus && foldingEnabled"
     },
@@ -29,23 +29,36 @@
         "when": "editorTextFocus && foldingEnabled"
     },
     {
-        "key": "shift+alt+-",
+        "key": "shift+alt+0",
         "command": "editor.foldAllExcept",
         "when": "editorTextFocus && foldingEnabled"
     },
     {
-        "key": "alt+\\",
-        "command": "editor.gotoParentFold"
-    },
-    {
-        "key": "alt+]",
+        "key": "alt+=",
         "command": "editor.unfold",
         "when": "editorTextFocus && foldingEnabled"
     },
     {
-        "key": "alt+[",
+        "key": "alt+-",
         "command": "editor.fold",
         "when": "editorTextFocus && foldingEnabled"
+    },
+    {
+        "key": "alt+\\",
+        "command": "editor.action.jumpToBracket",
+        "when": "editorTextFocus"
+    },
+    {
+        "key": "alt+[",
+        "command": "editor.gotoPreviousFold"
+    },
+    {
+        "key": "alt+]",
+        "command": "editor.gotoNextFold"
+    },
+    {
+        "key": "shift+alt+[",
+        "command": "editor.gotoParentFold"
     },
     // remove some default bindings
     {
@@ -77,5 +90,10 @@
         "key": "ctrl+shift+[",
         "command": "-editor.fold",
         "when": "editorTextFocus && foldingEnabled"
+    },
+    {
+        "key": "ctrl+shift+\\",
+        "command": "-editor.action.jumpToBracket",
+        "when": "editorTextFocus"
     },
 ]

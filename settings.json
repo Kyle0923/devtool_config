@@ -23,10 +23,14 @@
         "peekViewEditorStickyScroll.background": "#212f6b"
     },
     "gitlens.codeLens.enabled": false,
-    "gitlens.hovers.currentLine.over": "line",
     "diffEditor.ignoreTrimWhitespace": false,
     "terminal.explorerKind": "external",
     "terminal.integrated.cursorStyle": "line",
     "editor.stickyScroll.defaultModel": "foldingProviderModel",
     "editor.stickyScroll.maxLineCount": 10,
+    "bracket-peek.previewAlways": true,
+    "bracket-peek.previewLocation": "In line",
+    "files.insertFinalNewline": true,
+    "editor.guides.bracketPairsHorizontal": false,
+    "editor.guides.bracketPairs": "active",
 }
