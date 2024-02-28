@@ -1,5 +1,5 @@
 {
-    "workbench.colorTheme": "Default Dark Modern",
+    "workbench.colorTheme": "Visual Studio Dark",
     "editor.renderWhitespace": "boundary",
     "security.workspace.trust.untrustedFiles": "open",
     "[cpp]": {
@@ -13,9 +13,9 @@
     "[markdown]": {
         "files.trimTrailingWhitespace": false
     },
-    "files.autoSave": "afterDelay",
+    "files.autoSave": "onFocusChange",
     "files.trimTrailingWhitespace": true,
-    "editor.renderFinalNewline": "off",
+    "editor.renderFinalNewline": "dimmed",
     "editor.stickyScroll.enabled": true,
     "workbench.tree.enableStickyScroll": true,
     "workbench.colorCustomizations": {
@@ -33,4 +33,5 @@
     "files.insertFinalNewline": true,
     "editor.guides.bracketPairsHorizontal": false,
     "editor.guides.bracketPairs": "active",
+    "editor.foldingStrategy": "indentation",
 }
