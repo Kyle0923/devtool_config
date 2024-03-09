@@ -60,6 +60,28 @@
         "key": "shift+alt+[",
         "command": "editor.gotoParentFold"
     },
+    {
+        "key": "shift+f8",
+        "command": "highlightwords.addHighlight"
+    },
+    {
+        "key": "ctrl+p",
+        "command": "workbench.action.quickOpen",
+        "when": "!terminalFocus"
+    },
+    {
+        "key": "ctrl+p",
+        "command": "-workbench.action.quickOpen"
+    },
+    {
+        "key": "ctrl+q",
+        "command": "workbench.action.quickOpenView",
+        "when": " !terminalFocus"
+    },
+    {
+        "key": "ctrl+q",
+        "command": "-workbench.action.quickOpenView"
+    },
     // remove some default bindings
     {
         "key": "ctrl+k ctrl+0",
