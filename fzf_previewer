@@ -1,0 +1,51 @@
+#!/bin/bash
+
+# use tree for dir
+# else use bat
+# used for fzf preview
+
+# Function to find the index of the last space within a substring
+find_last_space() {
+    local str="$1"
+    local substring_length="$2"
+    local last_space_index=-1
+
+    for (( i=$substring_length; i>=0; i-- )); do
+        if [ "${str:i:1}" = " " ]; then
+            last_space_index=$i
+            break
+        fi
+    done
+
+    echo "$last_space_index"
+}
+
+# Function to format input string into multiple lines with up to $max_length characters each
+wrapped_echo() {
+    local input="$1"
+    local length=${#input}
+    local start=0
+    local end=0
+    local terminal_width=$(tput cols)
+    local max_length=$((terminal_width - 5))  # Adjust as needed
+    while [ $((end + max_length)) -lt $length ]; do
+        end=$((start + max_length))
+        # Find the last space within the substring
+        last_space_index=$(find_last_space "${input:$start:$max_length}" $((max_length - 1)))
+        if [ $last_space_index -eq -1 ]; then
+            last_space_index=$max_length
+        fi
+        echo "${input:$start:$last_space_index}"
+        start=$((start + last_space_index + 1))
+    done
+    echo "${input:$start}"
+}
+
+if [ ! -e "$1" ]; then
+    wrapped_echo "$@"
+elif [ -d "$1" ]; then
+    tree -C "$1" | head -200
+else
+    bat -n --color=always "$1"
+fi
+

@@ -4,16 +4,25 @@ alias ll="ls -lhaF"
 alias gits="git status"
 alias croot='cd `git rev-parse --show-toplevel`'
 alias crepo='cd $REPO_ROOT'
+alias ra='ranger'
 
 parse_git_branch() {
   git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/ (\1)/'
 }
 
-if [ ! -e ".dockerenv" ]; then
+if [ ! -e '/.dockerenv' ]; then
   export PS1="\u@\h \[\033[32m\]\w\[\033[33m\]\$(parse_git_branch)\[\033[00m\] $ "
 else
   export PS1="\[\e[44m\]\u@\h\[\e[0m\] \[\033[32m\]\w\[\033[33m\]\$(parse_git_branch)\[\033[00m\] $ "
 fi
+
+
+function cdf() {
+  # argument is not a directory
+  cd "$(dirname $1)"
+}
+export RANGER_LOAD_DEFAULT_RC=FALSE
+
 
 
 REPO_ROOT=~

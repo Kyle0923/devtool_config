@@ -1,0 +1,7 @@
+rg
+fdfind <- ln to fd
+tmux
+fzf <- git install
+ranger <- git intall
+xsel
+batcat <- ln to bat
