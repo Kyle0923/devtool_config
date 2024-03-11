@@ -34,4 +34,5 @@
     "editor.guides.bracketPairsHorizontal": false,
     "editor.guides.bracketPairs": "active",
     "editor.foldingStrategy": "indentation",
+    "terminal.integrated.fontFamily": "Consolas, 'Courier New', 'SauceCodePro Nerd Font Mono'",
 }

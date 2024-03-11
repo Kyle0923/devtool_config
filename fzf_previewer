@@ -47,7 +47,9 @@ elif [ -d "$1" ]; then
     tree -C "$1" | head -200
 elif file -b "$1" | grep -q "ELF"; then
     readelf -WCa "$1"
-else
+elif file -b "$1" | grep -q "text"; then
     bat -n --color=always "$1"
+else
+    file -b "$1"
 fi
 

@@ -17,6 +17,9 @@ export FZF_COMPLETION_TRIGGER='\'
 # Options to fzf command
 export FZF_COMPLETION_OPTS='--border --info=inline'
 
+_fzf_setup_completion path c code
+_fzf_setup_completion dir tree
+
 # Use fd (https://github.com/sharkdp/fd) for listing path candidates.
 # - The first argument to the function ($1) is the base path to start traversal
 # - See the source code (completion.{bash,zsh}) for the details.
@@ -40,6 +43,7 @@ _fzf_comprun() {
     cd)           fzf --preview 'tree -C {} | head -200'   "$@" ;;
     export|unset) fzf --preview "eval 'echo \$'{}"         "$@" ;;
     ssh)          fzf --preview 'dig {}'                   "$@" ;;
+    code)         fzf --preview 'fzf_previewer {}' "$@" ;;
     *)            fzf --preview 'fzf_previewer {}' "$@" ;;
   esac
 }
@@ -61,4 +65,5 @@ export FZF_CTRL_R_OPTS="
 # Print tree structure in the preview window
 export FZF_ALT_C_OPTS="--preview 'tree -C {}'"
 
+export FZF_DEFAULT_COMMAND='fd --type f'
 export FZF_DEFAULT_OPTS='--preview "fzf_previewer {}" --bind "ctrl-/:change-preview-window(up|hidden|)"'

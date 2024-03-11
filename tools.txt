@@ -2,6 +2,9 @@ rg
 fdfind <- ln to fd
 tmux
 fzf <- git install
-ranger <- git intall
 xsel
 batcat <- ln to bat
+ranger <- git intall
+    https://github.com/ranger/ranger/wiki/Plugins
+        ranger-fzf-filter
+        ranger_devicons
