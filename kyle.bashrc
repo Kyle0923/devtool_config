@@ -6,6 +6,7 @@ alias croot='cd `git rev-parse --show-toplevel`'
 alias crepo='cd $REPO_ROOT'
 alias ra='ranger'
 alias bashrc_source='source ~/.bashrc'
+alias ..='cd ..'
 
 parse_git_branch() {
     git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/ (\1)/'
