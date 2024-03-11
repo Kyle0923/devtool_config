@@ -45,6 +45,8 @@ if [ ! -e "$1" ]; then
     wrapped_echo "$@"
 elif [ -d "$1" ]; then
     tree -C "$1" | head -200
+elif file -b "$1" | grep -q "ELF"; then
+    readelf -WCa "$1"
 else
     bat -n --color=always "$1"
 fi
