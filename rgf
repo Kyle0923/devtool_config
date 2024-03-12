@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+
+# adapted from https://github.com/junegunn/fzf/blob/master/ADVANCED.md#using-fzf-as-interactive-ripgrep-launcher
+
+# interactive Ripgrep
+# on 'Enter' open the file in Vim
+# Switch between Ripgrep mode and fzf filtering mode (CTRL-T)
+
+# usage:
+# rgf [file] [regex]
+
+if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    echo "usage: rgf [file] [regex]  # both params are optional"
+    echo "Interactive Ripgrep / FZF"
+    echo
+    exit 0
+fi
+
+[ -f "$1" ] && file_path="-g '$1'" && shift
+rm -f /tmp/rg-fzf-{r,f}
+RG_PREFIX="rg --column --line-number --no-heading --color=always --smart-case $file_path"
+INITIAL_QUERY="${*:-}"
+: | fzf --ansi --disabled --query "$INITIAL_QUERY" \
+    --layout=reverse \
+    --exact \
+    --bind "start:reload:$RG_PREFIX {q}" \
+    --bind "change:reload:sleep 0.1; $RG_PREFIX {q} || true" \
+    --bind 'ctrl-t:transform:[[ ! $FZF_PROMPT =~ ripgrep ]] &&
+      echo "rebind(change)+change-prompt(1. ripgrep> )+disable-search+transform-query:echo \{q} > /tmp/rg-fzf-f; cat /tmp/rg-fzf-r" ||
+      echo "unbind(change)+change-prompt(2. fzf> )+enable-search+transform-query:echo \{q} > /tmp/rg-fzf-r; cat /tmp/rg-fzf-f"' \
+    --color "hl:-1:underline,hl+:-1:underline:reverse" \
+    --prompt "1. ripgrep>" \
+    --delimiter : \
+    --header 'CTRL-T: Switch between ripgrep/fzf' \
+    --preview 'bat --terminal-width $FZF_PREVIEW_COLUMNS --color=always {1} --highlight-line {2}' \
+    --preview-window 'up,60%,border-bottom,+{2}+3/3,~3' \
+    --bind 'enter:become(vim {1} +{2})' \
+    --bind 'ctrl-/:change-preview-window(right|up|hidden|)'
+
