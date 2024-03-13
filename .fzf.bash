@@ -43,7 +43,7 @@ _fzf_comprun() {
     cd)           fzf --preview 'tree -C {} | head -200'   "$@" ;;
     export|unset) fzf --preview "eval 'echo \$'{}"         "$@" ;;
     ssh)          fzf --preview 'dig {}'                   "$@" ;;
-    note|bookmark|bk)  fzf --preview 'fzf_previewer {}' --preview-window 'up' --bind 'ctrl-/:change-preview-window(hidden|)' "$@" ;;
+    note|bookmark|bk)  fzf --preview 'fzf_previewer {}' --preview-window 'up' --bind 'ctrl-/:toggle-preview' "$@" ;;
     *)            fzf --preview 'fzf_previewer {}'         "$@" ;;
   esac
 }
@@ -73,7 +73,7 @@ _fzf_complete_note() {
   _fzf_complete --multi --reverse --prompt="note> " -- "$@" < <(NO_COLOR_OUTPUT=true note | tail -n +2)
 }
 _fzf_complete_note_post() {
-  awk '{print $1}' | sed -e 's/\[\|\]//'g
+  awk '{print $1}' | sed -e 's/\[\|\]//g'
 }
 [ -n "$BASH" ] && complete -F _fzf_complete_note -o default -o bashdefault note
 
@@ -81,6 +81,6 @@ _fzf_complete_bookmark() {
   _fzf_complete --multi --reverse --prompt="bookmark> " -- "$@" < <(NO_COLOR_OUTPUT=true bookmark | tail -n +2)
 }
 _fzf_complete_bookmark_post() {
-  awk '{print $1}' | sed -e 's/\[\|\]//'g
+  awk '{print $1}' | sed -e 's/\[\|\]//g'
 }
 [ -n "$BASH" ] && complete -F _fzf_complete_bookmark -o default -o bashdefault bookmark
