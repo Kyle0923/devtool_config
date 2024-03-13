@@ -83,4 +83,4 @@ _fzf_complete_bookmark() {
 _fzf_complete_bookmark_post() {
   awk '{print $1}' | sed -e 's/\[\|\]//g'
 }
-[ -n "$BASH" ] && complete -F _fzf_complete_bookmark -o default -o bashdefault bookmark
+[ -n "$BASH" ] && complete -F _fzf_complete_bookmark -o default -o bashdefault bookmark bk
