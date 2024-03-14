@@ -76,12 +76,12 @@ class fzf_select(Command):
         import os.path
         if self.quantifier:
             # match only directories
-            command = "fd -L --type d 2> /dev/null | sed 1d | cut -b3- | fzf +m --preview 'fzf_previewer {}' \
+            command = "fd -L --type d 2> /dev/null | fzf +m --preview 'fzf_previewer {}' \
             --bind 'ctrl-/:change-preview-window(hidden|)'"
 
         else:
             # match files and directories
-            command = "fd -L 2> /dev/null | sed 1d | cut -b3- | fzf +m --preview 'fzf_previewer {}' \
+            command = "fd -L 2> /dev/null | fzf +m --preview 'fzf_previewer {}' \
             --bind 'ctrl-/:change-preview-window(hidden|)'"
 
         fzf = self.fm.execute_command(command,
