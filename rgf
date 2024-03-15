@@ -9,9 +9,15 @@
 # usage:
 # rgf [file] [regex]
 
+# ARCHIVE note
+#
 # known issue:
 # when pipeline input contains bash escape sequence, echo will attempt to interpret it and cause undesired string evaluation
 # e.g., '\\\$\(CMD\)', this sequence will consistently break the program
+# the stroing the pipe input to string and echo-ing to rg approach is proven to be problematic and thus will not further maintained
+# main branch will change to pipe input into a /tmp/ file and read the /tmp/ file instead
+# this branch is reference
+# Date: 2024-Mar-14
 
 if [[ "$1" == "-h" || "$1" == "--help" ]]; then
     echo "usage: rgf [file] [regex]  # both params are optional"
