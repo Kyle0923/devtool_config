@@ -13,6 +13,13 @@
 # the ctrl-f binding, we can first use rg then use fzf to perform an second level search, but the other way (first fzf then rg) is not supported
 # appears to relate to nth=3.., when we search in fzf mode and then switch back to rg, if the regex is not found, the search window doesn't display correctly. it appears fzf attempt to search through the 'not found' message. changing regex will restore
 
+# TODO: ctrl-W binding [WIP]
+# as of now, ctrl-w will forward the current matching entries to less
+# we can forward these entries back to rgf and provide a multi-level search
+# consider use tmux to avoid having to quit multiple layers
+# we will probably use this to replace the current ctrl-F
+
+
 if [[ "$1" == "-h" || "$1" == "--help" ]]; then
     echo "usage: rgf [file] [regex]  # both params are optional"
     echo "reading from pipe is supported though not recommanded for large input"
@@ -45,9 +52,9 @@ function main() {
         --bind "ctrl-t:transform:[[ ! \$FZF_PROMPT =~ 'rg>' ]] &&
                 echo \"rebind(change)+reload($RG_PREFIX {q} $file_path || $NOT_FOUND_PROMPT)+change-prompt(rg> )+disable-search\" ||
                 echo \"unbind(change)+reload($RG_PREFIX '' $file_path )+change-prompt(fzf> )+enable-search\" " \
-        --bind 'ctrl-f:transform:[[ ! $FZF_PROMPT =~ "rg>" ]] &&
-                echo "rebind(change)+change-prompt([fzf pending...] && rg> )+disable-search+transform-query:echo \{q} > /tmp/rg-fzf-f; cat /tmp/rg-fzf-r" ||
-                echo "unbind(change)+change-prompt([rg {q}] && fzf> )+enable-search+transform-query:echo \{q} > /tmp/rg-fzf-r; cat /tmp/rg-fzf-f"' \
+        --bind "ctrl-f:transform:[[ ! \$FZF_PROMPT =~ 'rg>' ]] &&
+                echo \"rebind(change)+change-prompt([fzf pending...] && rg> )+disable-search+transform-query:echo \{q} > /tmp/rg-fzf-f; cat /tmp/rg-fzf-r\" ||
+                echo \"unbind(change)+change-prompt([rg {q}] && fzf> )+enable-search+transform-query:echo \{q} > /tmp/rg-fzf-r; cat /tmp/rg-fzf-f\" " \
         --color "hl:-1:underline,hl+:-1:underline:reverse" \
         --prompt "rg> " \
         --delimiter : \
@@ -56,7 +63,9 @@ function main() {
         --preview-window 'up,60%,border-bottom,+{2}+3/3,~3' \
         --bind "enter:execute( $PATTERN_SETUP ; $PRETTY_BAT {1} --highlight-line {2} --pager \"less -R +{2} \$PATTERN\" ; echo {})" \
         --bind "alt-enter:execute(echo)+accept" \
-        --bind 'ctrl-/:change-preview-window(right|up|hidden|)'
+        --bind 'ctrl-/:change-preview-window(right|up|hidden|)' \
+        --bind "ctrl-w:select-all+execute(echo {+} | sed -e s+{1}+\\\\n{1}+g | sed -e 1d | $0)" \
+        --bind "alt-q:become(killall $0)"
 
 }
 
