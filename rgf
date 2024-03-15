@@ -9,9 +9,9 @@
 # usage:
 # rgf [file] [regex]
 
-# known issue:
-# when pipeline input contains bash escape sequence, echo will attempt to interpret it and cause undesired string evaluation
-# e.g., '\\\$\(CMD\)', this sequence will consistently break the program
+# known issue
+# the ctrl-f binding, we can first use rg then use fzf to perform an second level search, but the other way (first fzf then rg) is not supported
+# appears to relate to nth=3.., when we search in fzf mode and then switch back to rg, if the regex is not found, the search window doesn't display correctly. it appears fzf attempt to search through the 'not found' message. changing regex will restore
 
 if [[ "$1" == "-h" || "$1" == "--help" ]]; then
     echo "usage: rgf [file] [regex]  # both params are optional"
@@ -23,24 +23,11 @@ if [[ "$1" == "-h" || "$1" == "--help" ]]; then
 fi
 
 RG_PREFIX="rg --line-number --no-heading --color=always --smart-case"
-NOT_FOUND_PROMPT="echo '[[ regex:/{q}/ not found ]]'"
+NOT_FOUND_PROMPT="echo '::[[ regex:/{q}/ not found ]]::'" # nth=3.. will fail without the first 2 colons, the last two just for symmetric
 PRETTY_BAT='bat --color=always --terminal-width $(tput cols) --paging=always'
-ECHO="printf"
 PATTERN_SETUP="PATTERN=\$([ -z '{q}' ] && echo '' || echo \"-p \$(echo {q} | awk '{print \$1}')\")"
 
-# Only one engine is used during search, ctrl-t only changes the search engine
-SINGLE_SEARCH_MODE="ctrl-t:transform:[[ ! \$FZF_PROMPT =~ rg> ]] &&
-                    echo \"rebind(change)+reload($RG_PREFIX {q} || $NOT_FOUND_PROMPT)+change-prompt(1. rg> )+disable-search\" ||
-                    echo \"unbind(change)+reload($RG_PREFIX '')+change-prompt(2. fzf> )+enable-search\" "
-
-# Both engines are used, you can perform rg "foo" && fzf "bar" - there is an logical AND opertion implied
-DUAL_SEARCH_MODE='ctrl-f:transform:[[ ! $FZF_PROMPT =~ "rg>" ]] &&
-                  echo "rebind(change)+change-prompt([fzf {q}] && rg> )+disable-search+transform-query:echo \{q} > /tmp/rg-fzf-f; cat /tmp/rg-fzf-r" ||
-                  echo "unbind(change)+change-prompt([rg {q}] && fzf> )+enable-search+transform-query:echo \{q} > /tmp/rg-fzf-r; cat /tmp/rg-fzf-f"'
-
-if ! [ -p /dev/stdin ]; then
-
-    # Run from cli
+function main() {
 
     [ -f "$1" ] && file_path="'$1' --with-filename" && shift
 
@@ -58,9 +45,11 @@ if ! [ -p /dev/stdin ]; then
         --bind "ctrl-t:transform:[[ ! \$FZF_PROMPT =~ 'rg>' ]] &&
                 echo \"rebind(change)+reload($RG_PREFIX {q} $file_path || $NOT_FOUND_PROMPT)+change-prompt(rg> )+disable-search\" ||
                 echo \"unbind(change)+reload($RG_PREFIX '' $file_path )+change-prompt(fzf> )+enable-search\" " \
-        --bind "$DUAL_SEARCH_MODE" \
+        --bind 'ctrl-f:transform:[[ ! $FZF_PROMPT =~ "rg>" ]] &&
+                echo "rebind(change)+change-prompt([fzf pending...] && rg> )+disable-search+transform-query:echo \{q} > /tmp/rg-fzf-f; cat /tmp/rg-fzf-r" ||
+                echo "unbind(change)+change-prompt([rg {q}] && fzf> )+enable-search+transform-query:echo \{q} > /tmp/rg-fzf-r; cat /tmp/rg-fzf-f"' \
         --color "hl:-1:underline,hl+:-1:underline:reverse" \
-        --prompt "rg>" \
+        --prompt "rg> " \
         --delimiter : \
         --header 'CTRL-T: Switch between rg/fzf' \
         --preview 'bat --terminal-width $FZF_PREVIEW_COLUMNS --color=always {1} --highlight-line {2} 2>/dev/null || echo [empty]' \
@@ -69,36 +58,20 @@ if ! [ -p /dev/stdin ]; then
         --bind "alt-enter:execute(echo)+accept" \
         --bind 'ctrl-/:change-preview-window(right|up|hidden|)'
 
+}
+
+if ! [ -p /dev/stdin ]; then
+
+    # Run from cli
+    main $@
+
 else
 
     # Run from pipeline
-
-    joined_string=$(cat | sed -e "s+\\$+\\\\$+g") # escape $
-
-    rm -f /tmp/rg-fzf-{r,f}
-    INITIAL_QUERY="${*:-}"
-    $ECHO "$joined_string" | fzf --ansi --disabled --query "$INITIAL_QUERY" \
-        --layout=reverse-list \
-        --exact --track --no-sort \
-        --pointer='#' \
-        --marker='=>' \
-        --multi \
-        --nth=2.. \
-        --bind "start:reload:$ECHO \"$joined_string\" | $RG_PREFIX {q} || $NOT_FOUND_PROMPT" \
-        --bind "change:reload:sleep 0.1;$ECHO \"$joined_string\" | $RG_PREFIX {q} || $NOT_FOUND_PROMPT" \
-        --bind "ctrl-t:transform:[[ ! \$FZF_PROMPT =~ 'rg>' ]] &&
-                  echo 'rebind(change)+reload($ECHO \"$joined_string\" | $RG_PREFIX {q} || $NOT_FOUND_PROMPT)+change-promptrg> )+disable-search' ||
-                  echo 'unbind(change)+reload($ECHO \"$joined_string\" | $RG_PREFIX \"\" )+change-prompt(fzf> )+enable-search' "\
-        --bind "$DUAL_SEARCH_MODE" \
-        --color "hl:-1:underline,hl+:-1:underline:reverse" \
-        --prompt "rg>" \
-        --delimiter : \
-        --header 'CTRL-T: Switch between rg/fzf' \
-        --preview "$ECHO \"$joined_string\" | bat --terminal-width \$FZF_PREVIEW_COLUMNS --color=always --highlight-line {1} || echo [empty]" \
-        --preview-window 'up,60%,border-bottom,+{1}/3' \
-        --bind "enter:execute( $PATTERN_SETUP ; $ECHO \"$joined_string\" | $PRETTY_BAT --highlight-line {1} --pager \"less -R +{1} \$PATTERN\"; echo {} )" \
-        --bind "alt-enter:execute(echo)+accept" \
-        --bind 'ctrl-/:change-preview-window(right|up|hidden|)'
+    TEMP_FILE="/tmp/rg-fzf-pipe-tmp"
+    rm -f $TEMP_FILE
+    cat > $TEMP_FILE
+    main $TEMP_FILE $@
 
 fi
 
