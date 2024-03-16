@@ -7,11 +7,13 @@
 # Switch between Ripgrep mode and fzf filtering mode (CTRL-T)
 
 # usage:
-# rgf [file] [regex]
+# rgf [rg options] file search_words/regexes...
 
 # known issue
 # 1. appears to relate to nth=3.., when we search in fzf mode and then switch back to rg, if the regex is not found,
 #    the search window doesn't display correctly. it appears fzf attempt to search through the 'not found' message. changing query will restore
+# 2. ctrl-F no response, this can happen when the number of records is too large. Try to apply more fileters to reduce the searching pool
+
 
 show_help() {
     cat << EOF
@@ -19,13 +21,22 @@ Interactive Ripgrep / FZF
 
 usage: rgf [options] file search_words/regexes...  # both file and search_words/regexes are optional
        CMD | rgf [options]
+
 options:
     -h|--help   display this help message
     -*|--*      rg supported options
 
+key-bindings:
+    ctrl+/      change preview window position or close it
+    ctrl+t      toggle between rg and fzf
+    ctrl+f      search in current mattching records, could fail if the number of records is too large
+    enter       use 'less' to open the current record
+    alt-enter   fzf's accept the current selections, i.e., print the selected records to CLI
+
 EOF
     exit 0
 }
+
 
 RG_PREFIX="rg --line-number --no-heading --color=always --smart-case"
 NOT_FOUND_PROMPT="echo '::[[ regex:/{q}/ not found ]]::'" # nth=3.. will fail without the first 2 colons, the last two just for symmetric
@@ -67,11 +78,13 @@ main() {
     INITIAL_QUERY="${*:-}"
     : | fzf --ansi --query "$INITIAL_QUERY" \
         --layout=reverse-list \
-        --exact --track --no-sort \
+        --exact --no-sort \
         --pointer='=>' \
         --marker='# ' \
         --multi \
         --nth=3.. \
+        --bind "home:first" \
+        --bind "end:last" \
         --bind 'ctrl-/:change-preview-window(right|up|hidden|)' \
         --bind "start:reload($RG_PREFIX {q} $file_path || $NOT_FOUND_PROMPT)+unbind(change)" \
         --bind "change:reload:sleep 0.1; $RG_PREFIX {q} $file_path || $NOT_FOUND_PROMPT" \
@@ -82,11 +95,12 @@ main() {
         --color "hl:-1:underline,hl+:-1:underline:reverse" \
         --prompt "${prefix}fzf> " \
         --delimiter : \
-        --header 'CTRL-T: Switch between rg/fzf' \
+        --header 'CTRL-T: toggle rg/fzf, CTRL-F: search in current matches' \
         --preview 'bat --terminal-width $FZF_PREVIEW_COLUMNS --color=always {1} --highlight-line {2} 2>/dev/null || echo [empty]' \
         --preview-window 'up,60%,border-bottom,wrap,+{2}+3/3,~3' \
         --bind "enter:execute( $PATTERN_SETUP ; $PRETTY_BAT {1} --highlight-line {2} --pager \"less -R +{2} \$PATTERN\" ; echo peek: {} | $TRUNCATE_LINE )" \
         --bind "alt-enter:execute(echo)+accept" \
+        # --track # brokwn on fzf side, https://github.com/junegunn/fzf/issues/3681
 
 
 }
