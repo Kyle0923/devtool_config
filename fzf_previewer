@@ -41,7 +41,9 @@ wrapped_echo() {
     echo "${input:$start}"
 }
 
-if [ ! -e "$1" ]; then
+if [ -z "$1" ]; then
+    echo [empty]
+elif [ ! -e "$1" ]; then
     wrapped_echo "$@"
 elif [ -d "$1" ]; then
     tree -C "$1" | head -200

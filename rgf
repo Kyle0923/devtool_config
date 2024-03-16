@@ -96,10 +96,12 @@ main() {
         --prompt "${prefix}fzf> " \
         --delimiter : \
         --header 'CTRL-T: toggle rg/fzf, CTRL-F: search in current matches' \
-        --preview 'bat --terminal-width $FZF_PREVIEW_COLUMNS --color=always {1} --highlight-line {2} 2>/dev/null || echo [empty]' \
+        --preview 'bat --terminal-width $FZF_PREVIEW_COLUMNS --color=always {1} --highlight-line {2} 2>/dev/null || fzf_previewer {}' \
         --preview-window 'up,60%,border-bottom,wrap,+{2}+3/3,~3' \
-        --bind "enter:execute( $PATTERN_SETUP ; $PRETTY_BAT {1} --highlight-line {2} --pager \"less -R +{2} \$PATTERN\" ; echo peek: {} | $TRUNCATE_LINE )" \
+        --bind "enter:execute( [[ {} == \"\$($NOT_FOUND_PROMPT)\" ]] && exit 0 ; $PATTERN_SETUP ; \
+                    $PRETTY_BAT {1} --highlight-line {2} --pager \"less -R +{2} \$PATTERN\" 2>/dev/null ; echo peek: {} | $TRUNCATE_LINE )" \
         --bind "alt-enter:execute(echo)+accept" \
+
         # --track # brokwn on fzf side, https://github.com/junegunn/fzf/issues/3681
 
 
