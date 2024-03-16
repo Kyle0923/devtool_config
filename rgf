@@ -13,14 +13,19 @@
 # 1. appears to relate to nth=3.., when we search in fzf mode and then switch back to rg, if the regex is not found,
 #    the search window doesn't display correctly. it appears fzf attempt to search through the 'not found' message. changing query will restore
 
-if [[ "$1" == "-h" || "$1" == "--help" ]]; then
-    echo "usage: rgf [file] [regex]  # both params are optional"
-    echo "reading from pipe is supported though not recommanded for large input"
-    echo
-    echo "Interactive Ripgrep / FZF"
-    echo
+show_help() {
+    cat << EOF
+Interactive Ripgrep / FZF
+
+usage: rgf [options] file search_words/regexes...  # both file and search_words/regexes are optional
+       CMD | rgf [options]
+options:
+    -h|--help   display this help message
+    -*|--*      rg supported options
+
+EOF
     exit 0
-fi
+}
 
 RG_PREFIX="rg --line-number --no-heading --color=always --smart-case"
 NOT_FOUND_PROMPT="echo '::[[ regex:/{q}/ not found ]]::'" # nth=3.. will fail without the first 2 colons, the last two just for symmetric
@@ -30,10 +35,33 @@ PROMPT_SETUP="PROMPT=\$([[ \$FZF_PROMPT =~ 'rg>' ]] && echo 'rg:' || echo 'fzf:'
 PREFIX_SETUP="$PROMPT_SETUP ; new_prefix=\$([ -z \"{q}\" ] && echo '' || echo \"[{q}]\") ; echo \$PROMPT \"{q}\""
 TRUNCATE_LINE="awk '{ if (length(\$0) > 201) print substr(\$0, 1, 201) \" [...]\"; else print \$0; }'"
 
-function main() {
+# parse options
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -h|--help)
+            show_help
+            exit 0
+            ;;
+        --PREFIX)
+            prefix="$2 && "
+            shift 2
+            ;;
+        -*)
+            rg_opt="$1 '$2'"
+            RG_PREFIX="$RG_PREFIX $rg_opt"
+            shift 2
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
+set -- "$@"
+
+
+main() {
 
     [ -f "$1" ] && file_path="'$1'" && shift
-    [[ -n "$1" && "$1" == '--pre' ]] && prefix="$2 && " && shift && shift
 
     rm -f /tmp/rg-fzf-{r,f}
     INITIAL_QUERY="${*:-}"
@@ -50,7 +78,7 @@ function main() {
         --bind "ctrl-t:transform:[[ ! \$FZF_PROMPT =~ 'rg>' ]] &&
                 echo \"rebind(change)+disable-search+reload($RG_PREFIX {q} $file_path || $NOT_FOUND_PROMPT)+change-prompt(${prefix}rg> )\" ||
                 echo \"unbind(change)+reload($RG_PREFIX '' $file_path )+change-prompt(${prefix}fzf> )+enable-search\" " \
-        --bind "ctrl-f:select-all+execute($PREFIX_SETUP ; printf '%s\n' {+} | rgf --pre \"${prefix}\$new_prefix\")+clear-selection" \
+        --bind "ctrl-f:select-all+execute($PREFIX_SETUP ; printf '%s\n' {+} | rgf --PREFIX \"${prefix}\$new_prefix\")+clear-selection" \
         --color "hl:-1:underline,hl+:-1:underline:reverse" \
         --prompt "${prefix}fzf> " \
         --delimiter : \
@@ -66,16 +94,17 @@ function main() {
 if ! [ -p /dev/stdin ]; then
 
     # Run from cli
-    main $@
+    main "$@"
 
 else
 
     # Run from pipeline
-    TEMP_FILE="/tmp/rg-fzf-pipe-tmp"
+    TEMP_FILE="/tmp/rg-fzf-pipe-$$"
     rm -f $TEMP_FILE
     cat > $TEMP_FILE
     RG_PREFIX="$RG_PREFIX --no-filename --no-heading --no-line-number"
     main $TEMP_FILE "$@"
+    rm -f $TEMP_FILE
 
 fi
 
