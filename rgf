@@ -12,8 +12,6 @@
 # known issue
 # 1. appears to relate to nth=3.., when we search in fzf mode and then switch back to rg, if the regex is not found,
 #    the search window doesn't display correctly. it appears fzf attempt to search through the 'not found' message. changing query will restore
-# 2. when the searching content contains some bash escape sequence, echo will attempt to evaluate it and cause issue
-#    this has been observed when a file contains "/bin/bash" and ctrl-F binding is invoked.
 
 if [[ "$1" == "-h" || "$1" == "--help" ]]; then
     echo "usage: rgf [file] [regex]  # both params are optional"
@@ -27,9 +25,10 @@ fi
 RG_PREFIX="rg --line-number --no-heading --color=always --smart-case"
 NOT_FOUND_PROMPT="echo '::[[ regex:/{q}/ not found ]]::'" # nth=3.. will fail without the first 2 colons, the last two just for symmetric
 PRETTY_BAT='bat --color=always --terminal-width $(tput cols) --paging=always'
-PATTERN_SETUP="PATTERN=\$([ -z '{q}' ] && echo '' || echo \"-p \$(echo {q} | awk '{print \$1}')\")"
+PATTERN_SETUP="PATTERN=\$([ -z {q} ] && echo '' || echo \"-p \$(echo '{q}' | awk '{print \$1}')\")"
 PROMPT_SETUP="PROMPT=\$([[ \$FZF_PROMPT =~ 'rg>' ]] && echo 'rg:' || echo 'fzf:') "
-PREFIX_SETUP="$PROMPT_SETUP ; new_prefix=\$([ -z \"{q}\" ] && echo '' || echo [{q}]) ; echo \$PROMPT {q}"
+PREFIX_SETUP="$PROMPT_SETUP ; new_prefix=\$([ -z \"{q}\" ] && echo '' || echo \"[{q}]\") ; echo \$PROMPT \"{q}\""
+TRUNCATE_LINE="awk '{ if (length(\$0) > 201) print substr(\$0, 1, 201) \" [...]\"; else print \$0; }'"
 
 function main() {
 
@@ -38,7 +37,7 @@ function main() {
 
     rm -f /tmp/rg-fzf-{r,f}
     INITIAL_QUERY="${*:-}"
-    : | fzf --ansi --disabled --query "$INITIAL_QUERY" \
+    : | fzf --ansi --query "$INITIAL_QUERY" \
         --layout=reverse-list \
         --exact --track --no-sort \
         --pointer='=>' \
@@ -46,19 +45,19 @@ function main() {
         --multi \
         --nth=3.. \
         --bind 'ctrl-/:change-preview-window(right|up|hidden|)' \
-        --bind "start:reload:$RG_PREFIX {q} $file_path || $NOT_FOUND_PROMPT" \
+        --bind "start:reload($RG_PREFIX {q} $file_path || $NOT_FOUND_PROMPT)+unbind(change)" \
         --bind "change:reload:sleep 0.1; $RG_PREFIX {q} $file_path || $NOT_FOUND_PROMPT" \
         --bind "ctrl-t:transform:[[ ! \$FZF_PROMPT =~ 'rg>' ]] &&
                 echo \"rebind(change)+disable-search+reload($RG_PREFIX {q} $file_path || $NOT_FOUND_PROMPT)+change-prompt(${prefix}rg> )\" ||
                 echo \"unbind(change)+reload($RG_PREFIX '' $file_path )+change-prompt(${prefix}fzf> )+enable-search\" " \
         --bind "ctrl-f:select-all+execute($PREFIX_SETUP ; printf '%s\n' {+} | rgf --pre \"${prefix}\$new_prefix\")+clear-selection" \
         --color "hl:-1:underline,hl+:-1:underline:reverse" \
-        --prompt "${prefix}rg> " \
+        --prompt "${prefix}fzf> " \
         --delimiter : \
         --header 'CTRL-T: Switch between rg/fzf' \
         --preview 'bat --terminal-width $FZF_PREVIEW_COLUMNS --color=always {1} --highlight-line {2} 2>/dev/null || echo [empty]' \
         --preview-window 'up,60%,border-bottom,wrap,+{2}+3/3,~3' \
-        --bind "enter:execute( $PATTERN_SETUP ; $PRETTY_BAT {1} --highlight-line {2} --pager \"less -R +{2} \$PATTERN\" ; echo peek: {})" \
+        --bind "enter:execute( $PATTERN_SETUP ; $PRETTY_BAT {1} --highlight-line {2} --pager \"less -R +{2} \$PATTERN\" ; echo peek: {} | $TRUNCATE_LINE )" \
         --bind "alt-enter:execute(echo)+accept" \
 
 
