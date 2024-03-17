@@ -47,6 +47,9 @@ PATTERN_SETUP="PATTERN=\$([ -z {q} ] && echo '' || echo \"-p \$(echo '{q}' | awk
 PROMPT_SETUP="PROMPT=\$([[ \$FZF_PROMPT =~ 'rg>' ]] && echo 'rg:' || echo 'fzf:') "
 PREFIX_SETUP="$PROMPT_SETUP ; new_prefix=\$([ -z \"{q}\" ] && echo '' || echo \"[{q}]\") ; echo \$PROMPT \"{q}\""
 TRUNCATE_LINE="awk '{ if (length(\$0) > 201) print substr(\$0, 1, 201) \" [...]\"; else print \$0; }'"
+FILE_PATH='{1}'
+LINE_NUM='{2}'
+N_TH='3..'
 
 # parse options
 while [[ $# -gt 0 ]]; do
@@ -56,8 +59,8 @@ while [[ $# -gt 0 ]]; do
             exit 0
             ;;
         --PASS-THROUGH)
-            PASS_THROUGH_MODE=true
-            shift
+            PASS_THROUGH_MODE=$2
+            shift 2
             ;;
         --PREFIX)
             prefix="$2 && "
@@ -75,6 +78,8 @@ while [[ $# -gt 0 ]]; do
 done
 set -- "$@"
 
+PASS_THROUGH_MODE="${PASS_THROUGH_MODE:='0'}" # provide a default value
+
 main() {
 
     [ -f "$1" ] && file_path="'$1'" && shift
@@ -87,7 +92,7 @@ main() {
         --pointer='=>' \
         --marker='# ' \
         --multi \
-        --nth=3.. \
+        --nth=$N_TH \
         --bind "home:first" \
         --bind "end:last" \
         --bind 'ctrl-/:change-preview-window(right|up|hidden|)' \
@@ -96,15 +101,15 @@ main() {
         --bind "ctrl-t:transform:[[ ! \$FZF_PROMPT =~ 'rg>' ]] &&
                 echo \"rebind(change)+disable-search+reload($RG_PREFIX {q} $file_path || $NOT_FOUND_PROMPT)+change-prompt(${prefix}rg> )\" ||
                 echo \"unbind(change)+reload($RG_PREFIX '' $file_path )+change-prompt(${prefix}fzf> )+enable-search\" " \
-        --bind "ctrl-f:select-all+execute($PREFIX_SETUP ; printf '%s\n' {+} | rgf --PREFIX \"${prefix}\$new_prefix\" --PASS-THROUGH )+clear-selection" \
+        --bind "ctrl-f:select-all+execute($PREFIX_SETUP ; printf '%s\n' {+} | rgf --PREFIX \"${prefix}\$new_prefix\" --PASS-THROUGH $PASS_THROUGH_MODE )+clear-selection" \
         --color "hl:-1:underline,hl+:-1:underline:reverse" \
         --prompt "${prefix}fzf> " \
         --delimiter : \
         --header 'CTRL-T: toggle rg/fzf, CTRL-F: nested search' \
-        --preview "bat $PIPE_BAT_OPT --terminal-width \$FZF_PREVIEW_COLUMNS --color=always {1} --highlight-line {2} 2>/dev/null || fzf_previewer {}" \
-        --preview-window "up,60%,border-bottom,wrap,+{2}+3/3$PREVIEW_HEADER_LINE" \
+        --preview "bat $PIPE_BAT_OPT --terminal-width \$FZF_PREVIEW_COLUMNS --color=always $FILE_PATH --highlight-line $LINE_NUM 2>/dev/null || fzf_previewer {}" \
+        --preview-window "up,60%,border-bottom,wrap,+$LINE_NUM+3/3$PREVIEW_HEADER_LINE" \
         --bind "enter:execute( [[ {} == \"\$($NOT_FOUND_PROMPT)\" ]] && exit 0 ; $PATTERN_SETUP ; \
-                    $PRETTY_BAT {1} --highlight-line {2} --pager \"less -R +{2} \$PATTERN\" 2>/dev/null ; echo peek: {} | $TRUNCATE_LINE )" \
+                    $PRETTY_BAT $FILE_PATH --highlight-line $LINE_NUM --pager \"less -R +$LINE_NUM \$PATTERN\" 2>/dev/null ; echo peek: {} | $TRUNCATE_LINE )" \
         --bind "alt-enter:execute(echo)+accept" \
 
         # --track # brokwn on fzf side, https://github.com/junegunn/fzf/issues/3681
@@ -125,14 +130,23 @@ else
     rm -f $TEMP_FILE
     cat > $TEMP_FILE
 
-    if [[ "$PASS_THROUGH_MODE" == true ]]; then
+    if [[ "$PASS_THROUGH_MODE" == '0' ]]; then
         # run in nested search mode
         RG_PREFIX="$RG_PREFIX --no-filename --no-heading --no-line-number"
     else
-        # top level input is from pipe
+        if [[ "$PASS_THROUGH_MODE" =~ "/tmp/rg-fzf-pipe-" ]]; then
+            # nested search mode when top level is pipe input
+            RG_PREFIX="$RG_PREFIX --no-filename --no-heading --no-line-number"
+        else
+            # top level entry with input from pipe
+            PASS_THROUGH_MODE="$TEMP_FILE"
+        fi
+        # common when top level is pipe
         PIPE_BAT_OPT="$PIPE_BAT_OPT --style=grid,numbers"
         PREVIEW_HEADER_LINE=''
-        RG_PREFIX="$RG_PREFIX --with-filename"
+        FILE_PATH="$PASS_THROUGH_MODE"
+        LINE_NUM='{1}'
+        N_TH='2..'
     fi
 
     main $TEMP_FILE "$@"
