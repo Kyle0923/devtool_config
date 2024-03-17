@@ -126,7 +126,7 @@ main() {
     INITIAL_QUERY="${*:-}"
     : | fzf --ansi --query "$INITIAL_QUERY" \
         --layout=reverse-list \
-        --exact --no-sort \
+        --exact --track --no-sort \
         --pointer='=>' \
         --marker='# ' \
         --multi \
@@ -150,9 +150,6 @@ main() {
                     $PRETTY_BAT $PREVIEW_FILE --highlight-line $LINE_NUM --pager \"less -R +$LINE_NUM \$PATTERN\" 2>/dev/null ; echo peek: {} $SILENT | $TRUNCATE_LINE )" \
         --bind "alt-enter:become( [[ $PASS_THROUGH_MODE == '0' ]] && printf '%s\n' {+1} || printf '%s\n' {+} )" \
         $FZF_OPT \
-
-        # --track # brokwn on fzf side, https://github.com/junegunn/fzf/issues/3681
-
 
 }
 
