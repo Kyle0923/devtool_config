@@ -41,6 +41,8 @@ EOF
 RG_PREFIX="rg --line-number --no-heading --color=always --smart-case"
 NOT_FOUND_PROMPT="echo '::[[ regex:/{q}/ not found ]]::'" # nth=3.. will fail without the first 2 colons, the last two just for symmetric
 PRETTY_BAT='bat --color=always --terminal-width $(tput cols) --paging=always'
+PIPE_BAT_OPT=''
+PREVIEW_HEADER_LINE=',~3'
 PATTERN_SETUP="PATTERN=\$([ -z {q} ] && echo '' || echo \"-p \$(echo '{q}' | awk '{print \$1}')\")"
 PROMPT_SETUP="PROMPT=\$([[ \$FZF_PROMPT =~ 'rg>' ]] && echo 'rg:' || echo 'fzf:') "
 PREFIX_SETUP="$PROMPT_SETUP ; new_prefix=\$([ -z \"{q}\" ] && echo '' || echo \"[{q}]\") ; echo \$PROMPT \"{q}\""
@@ -52,6 +54,10 @@ while [[ $# -gt 0 ]]; do
         -h|--help)
             show_help
             exit 0
+            ;;
+        --PASS-THROUGH)
+            PASS_THROUGH_MODE=true
+            shift
             ;;
         --PREFIX)
             prefix="$2 && "
@@ -68,7 +74,6 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 set -- "$@"
-
 
 main() {
 
@@ -91,13 +96,13 @@ main() {
         --bind "ctrl-t:transform:[[ ! \$FZF_PROMPT =~ 'rg>' ]] &&
                 echo \"rebind(change)+disable-search+reload($RG_PREFIX {q} $file_path || $NOT_FOUND_PROMPT)+change-prompt(${prefix}rg> )\" ||
                 echo \"unbind(change)+reload($RG_PREFIX '' $file_path )+change-prompt(${prefix}fzf> )+enable-search\" " \
-        --bind "ctrl-f:select-all+execute($PREFIX_SETUP ; printf '%s\n' {+} | rgf --PREFIX \"${prefix}\$new_prefix\")+clear-selection" \
+        --bind "ctrl-f:select-all+execute($PREFIX_SETUP ; printf '%s\n' {+} | rgf --PREFIX \"${prefix}\$new_prefix\" --PASS-THROUGH )+clear-selection" \
         --color "hl:-1:underline,hl+:-1:underline:reverse" \
         --prompt "${prefix}fzf> " \
         --delimiter : \
-        --header 'CTRL-T: toggle rg/fzf, CTRL-F: search in current matches' \
-        --preview 'bat --terminal-width $FZF_PREVIEW_COLUMNS --color=always {1} --highlight-line {2} 2>/dev/null || fzf_previewer {}' \
-        --preview-window 'up,60%,border-bottom,wrap,+{2}+3/3,~3' \
+        --header 'CTRL-T: toggle rg/fzf, CTRL-F: nested search' \
+        --preview "bat $PIPE_BAT_OPT --terminal-width \$FZF_PREVIEW_COLUMNS --color=always {1} --highlight-line {2} 2>/dev/null || fzf_previewer {}" \
+        --preview-window "up,60%,border-bottom,wrap,+{2}+3/3$PREVIEW_HEADER_LINE" \
         --bind "enter:execute( [[ {} == \"\$($NOT_FOUND_PROMPT)\" ]] && exit 0 ; $PATTERN_SETUP ; \
                     $PRETTY_BAT {1} --highlight-line {2} --pager \"less -R +{2} \$PATTERN\" 2>/dev/null ; echo peek: {} | $TRUNCATE_LINE )" \
         --bind "alt-enter:execute(echo)+accept" \
@@ -110,6 +115,7 @@ main() {
 if ! [ -p /dev/stdin ]; then
 
     # Run from cli
+    [ -f "$1" ] && RG_PREFIX="$RG_PREFIX --with-filename"
     main "$@"
 
 else
@@ -118,7 +124,17 @@ else
     TEMP_FILE="/tmp/rg-fzf-pipe-$$"
     rm -f $TEMP_FILE
     cat > $TEMP_FILE
-    RG_PREFIX="$RG_PREFIX --no-filename --no-heading --no-line-number"
+
+    if [[ "$PASS_THROUGH_MODE" == true ]]; then
+        # run in nested search mode
+        RG_PREFIX="$RG_PREFIX --no-filename --no-heading --no-line-number"
+    else
+        # top level input is from pipe
+        PIPE_BAT_OPT="$PIPE_BAT_OPT --style=grid,numbers"
+        PREVIEW_HEADER_LINE=''
+        RG_PREFIX="$RG_PREFIX --with-filename"
+    fi
+
     main $TEMP_FILE "$@"
     rm -f $TEMP_FILE
 

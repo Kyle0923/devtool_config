@@ -46,6 +46,7 @@ if [ -z "$1" ]; then
 elif [ ! -e "$1" ]; then
     wrapped_echo "$@"
 elif [ -d "$1" ]; then
+    echo "Directory: $1" | bat --style=grid --color=always
     tree -C "$1" | head -200
 elif file -b "$1" | grep -q "ELF"; then
     readelf -WCa "$1"
