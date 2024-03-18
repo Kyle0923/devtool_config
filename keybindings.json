@@ -132,4 +132,17 @@
         "command": "-workbench.action.terminal.searchWorkspace",
         "when": "terminalFocus && terminalProcessSupported && terminalTextSelected"
     },
+    {
+        "key": "ctrl+d",
+        "command": "-editor.action.addSelectionToNextFindMatch",
+        "when": "editorFocus"
+    },
+    {
+        "key": "f8",
+        "command": "editor.action.addSelectionToNextFindMatch"
+    },
+    {
+        "key": "f7",
+        "command": "editor.action.addSelectionToPreviousFindMatch"
+    }
 ]

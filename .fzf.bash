@@ -1,16 +1,19 @@
 # Setup fzf
 # ---------
-if [[ ! "$PATH" == */home/user/tools/fzf/bin* ]]; then
-  PATH="${PATH:+${PATH}:}/home/user/tools/fzf/bin"
+
+HOME_DIR=`realpath ~`
+
+if [[ ! "$PATH" == *$HOME_DIR/tools/fzf/bin* ]]; then
+  PATH="${PATH:+${PATH}:}$HOME_DIR/tools/fzf/bin"
 fi
 
 # Auto-completion
 # ---------------
-source "/home/user/tools/fzf/shell/completion.bash"
+source "$HOME_DIR/tools/fzf/shell/completion.bash"
 
 # Key bindings
 # ------------
-source "/home/user/tools/fzf/shell/key-bindings.bash"
+source "$HOME_DIR/tools/fzf/shell/key-bindings.bash"
 
 export FZF_COMPLETION_TRIGGER='\'
 

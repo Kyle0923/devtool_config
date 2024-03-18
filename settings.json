@@ -1,5 +1,4 @@
 {
-    "workbench.colorTheme": "Visual Studio Dark",
     "editor.renderWhitespace": "boundary",
     "security.workspace.trust.untrustedFiles": "open",
     "[cpp]": {
@@ -13,9 +12,9 @@
     "[markdown]": {
         "files.trimTrailingWhitespace": false
     },
-    "files.autoSave": "onFocusChange",
     "files.trimTrailingWhitespace": true,
     "editor.renderFinalNewline": "dimmed",
+    "terminal.integrated.defaultProfile.windows": "Git Bash",
     "editor.stickyScroll.enabled": true,
     "workbench.tree.enableStickyScroll": true,
     "workbench.colorCustomizations": {
@@ -34,5 +33,7 @@
     "editor.guides.bracketPairsHorizontal": false,
     "editor.guides.bracketPairs": "active",
     "editor.foldingStrategy": "indentation",
+    "files.autoSave": "onFocusChange",
     "terminal.integrated.fontFamily": "Consolas, 'Courier New', 'SauceCodePro Nerd Font Mono'",
+    "workbench.colorTheme": "Default Dark+",
 }
