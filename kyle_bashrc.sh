@@ -4,9 +4,12 @@ alias ll="ls -lhaF"
 alias gits="git status"
 alias croot='cd `git rev-parse --show-toplevel`'
 alias crepo='cd $REPO_ROOT'
+alias rp='realpath'
 alias ra='ranger'
 alias bashrc_source='source ~/.bashrc'
 alias ..='cd ..'
+
+export RANGER_LOAD_DEFAULT_RC=FALSE
 
 parse_git_branch() {
     git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/ (\1)/'
@@ -32,9 +35,6 @@ function c() {
         builtin cd "$(dirname $1)"
     fi
 }
-
-export RANGER_LOAD_DEFAULT_RC=FALSE
-
 
 REPO_ROOT=~
 REPO() {
