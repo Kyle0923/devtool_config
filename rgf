@@ -127,6 +127,7 @@ main() {
     : | fzf --ansi --query "$INITIAL_QUERY" \
         --layout=reverse-list \
         --exact --no-sort \
+        --track \
         --pointer='=>' \
         --marker='# ' \
         --multi \

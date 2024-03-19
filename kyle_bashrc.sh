@@ -11,16 +11,12 @@ alias ..='cd ..'
 
 export RANGER_LOAD_DEFAULT_RC=FALSE
 
-source ~/.fzf.bash
+[ -f ~/.fzf.bash ] && source ~/.fzf.bash
 source ~/tools/fzf-git.sh/fzf-git.sh
+source ~/tools/devtool_config/kyle_fzf.bash
 
-gcoc() {
-  _fzf_git_hashes --no-multi | xargs -I{} echo git checkout {} "$@"
-}
-
-gcob() {
-  _fzf_git_branches --no-multi | xargs -I{} echo git checkout {} "$@"
-}
+alias gcoc='git checkout' # for git checkout <commit>
+alias gcob='git checkout' # for git checkout <branch>
 
 parse_git_branch() {
     git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/ (\1)/'
