@@ -92,8 +92,8 @@ _fzf_complete_gcoc() {
     --color hl:underline,hl+:underline \
     --preview 'grep -o "[a-f0-9]\{7,\}" <<< {} | head -n 1 | xargs git show --color=always' \
     --bind "alt-a:transform: [[ \$FZF_PROMPT == 'current branch> ' ]] &&
-                        echo \"change-border-label(💡 Commits on all branches)+change-prompt(all commits> )+reload(git log --all $git_log_opt) \" ||
-                        echo \"change-border-label(💡 Commits on $current_branch)+change-prompt(current branch> )+reload(git log $git_log_opt) \" " \
+                        echo \"change-border-label(💡 Commits on all branches)+change-prompt(all commits> )+reload:(git log --all $git_log_opt) \" ||
+                        echo \"change-border-label(💡 Commits on $current_branch)+change-prompt(current branch> )+reload:(git log $git_log_opt) \" " \
     --bind "start:reload(git log $git_log_opt)" \
     -- "$@" < <(echo)
 }
@@ -116,8 +116,8 @@ _fzf_complete_gcob() {
     --color hl:underline,hl+:underline \
     --preview 'git log --oneline --graph --date=short --color=always --pretty="format:%C(auto)%cd %h%d %s" $(sed s/^..// <<< {} | cut -d" " -f1) --' \
     --bind "alt-a:transform: [[ \$FZF_PROMPT == 'local branches> ' ]] &&
-                        echo \"change-prompt(all branches> )+reload(git branch --all $git_branch_opt) \" ||
-                        echo \"change-prompt(local branches> )+reload(git branch $git_branch_opt) \" " \
+                        echo \"change-prompt(all branches> )+reload:(git branch --all $git_branch_opt) \" ||
+                        echo \"change-prompt(local branches> )+reload:(git branch $git_branch_opt) \" " \
     --bind "start:reload(git branch $git_branch_opt)" \
     -- "$@" < <(echo)
 }
