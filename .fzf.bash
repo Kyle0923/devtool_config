@@ -72,6 +72,7 @@ export FZF_DEFAULT_COMMAND='fd --type f'
 # export FZF_DEFAULT_OPTS='--preview "fzf_previewer {}" --bind "ctrl-/:change-preview-window(up|hidden|)"'
 export FZF_DEFAULT_OPTS='--bind="alt-left:preview-page-up,alt-right:preview-page-down,alt-up:preview-up,alt-down:preview-down"'
 
+########################################################################
 _fzf_complete_note() {
   _fzf_complete --multi --reverse --prompt="note> " -- "$@" < <(NO_COLOR_OUTPUT=true note | tail -n +2)
 }
@@ -80,6 +81,7 @@ _fzf_complete_note_post() {
 }
 [ -n "$BASH" ] && complete -F _fzf_complete_note -o default -o bashdefault note
 
+########################################################################
 _fzf_complete_bookmark() {
   _fzf_complete --multi --reverse --prompt="bookmark> " -- "$@" < <(NO_COLOR_OUTPUT=true bookmark | tail -n +2)
 }
@@ -87,3 +89,24 @@ _fzf_complete_bookmark_post() {
   awk '{print $1}' | sed -e 's/\[\|\]//g'
 }
 [ -n "$BASH" ] && complete -F _fzf_complete_bookmark -o default -o bashdefault bookmark bk
+
+########################################################################
+# a functional `git co` commit auto-complete, but would not be able to switch between all commits and commits on current branch
+# alias gcoc='git co' # git co <commit>
+# _fzf_complete_gcoc() {
+#   _fzf_complete --no-multi --reverse --preview-window='right,50%,border-left' --prompt="git commit> " \
+#   --bind='ctrl-/:change-preview-window(down,50%,border-top|hidden|)' \
+#   --ansi --no-sort --bind 'ctrl-s:toggle-sort' \
+#   --border-label-pos=2 \
+#   --border-label '🍡 Hashes' \
+#   --color hl:underline,hl+:underline \
+#   --preview 'grep -o "[a-f0-9]\{7,\}" <<< {} | head -n 1 | xargs git show --color=always' \
+#   -- "$@" < <(git log --date=short --format="%C(green)%C(bold)%cd %C(auto)%h%d %s (%an)" --graph --color=always)
+# }
+
+# _fzf_complete_gcoc_post() {
+#     awk 'match($0, /[a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9]*/) { print substr($0, RSTART, RLENGTH) }'
+# }
+# [ -n "$BASH" ] && complete -F _fzf_complete_gcoc -o default -o bashdefault gcoc
+
+########################################################################

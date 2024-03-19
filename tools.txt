@@ -2,6 +2,7 @@ rg
 fdfind <- ln to fd
 tmux
 fzf <- git install
+fzf-git <- remove bindings, clone https://github.com/junegunn/fzf-git.sh
 xsel
 batcat <- ln to bat
 ranger <- git intall
