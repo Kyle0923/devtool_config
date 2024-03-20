@@ -5,7 +5,7 @@ export FZF_COMPLETION_TRIGGER='\'
 # Options to fzf command
 export FZF_COMPLETION_OPTS='--border --info=inline'
 
-_fzf_setup_completion path c code
+_fzf_setup_completion path code
 _fzf_setup_completion dir tree
 
 # Use fd (https://github.com/sharkdp/fd) for listing path candidates.
@@ -76,6 +76,30 @@ _fzf_complete_bookmark_post() {
 [ -n "$BASH" ] && complete -F _fzf_complete_bookmark -o default -o bashdefault bookmark bk
 
 ########################################################################
+# auto complete for git checkout <branch>
+_fzf_complete_c() {
+    _fzf_complete --no-multi --reverse --preview-window='right,50%,border-left' --prompt="./" \
+    --bind='ctrl-/:change-preview-window(down,50%,border-top|hidden|)' \
+    --ansi --no-sort \
+    --border-label-pos=2 \
+    --border-label "Path" \
+    --header 'Alt-Enter: accept path' \
+    --color hl:underline,hl+:underline \
+    --preview 'fzf_previewer {}' \
+    --bind "enter:transform: [[ -d \$(echo \$FZF_PROMPT{}/) ]] &&
+            echo \"change-prompt(\$(echo \$FZF_PROMPT{}/))+reload(ls -a \$FZF_PROMPT{})+clear-query \" " \
+    --bind "alt-enter:transform: echo \"become(echo \$FZF_PROMPT{}) \" " \
+    --bind "start:reload(ls -a .)" \
+    -- "$@" < <(echo)
+}
+# --bind "enter:transform: echo \"reload(ls -a \$FZF_PROMPT{})+change-prompt(\$(echo \$FZF_PROMPT{}/) \" " \
+# --bind "alt-a:transform: echo \"change-border-label(💡 Commits on \$FZF_PROMPT)+change-prompt(current branch> ) \" " \
+# _fzf_complete_c_post() {
+#     sed 's/^..//' | cut -d' ' -f1
+# }
+[ -n "$BASH" ] && complete -F _fzf_complete_c -o default -o bashdefault c
+
+########################################################################
 # auto completion for git checkout, adapted from https://github.com/junegunn/fzf-git.sh
 ########################################################################
 
@@ -112,7 +136,7 @@ _fzf_complete_gcob() {
     --ansi --no-sort \
     --header 'Alt-A: switch between local and all branches' \
     --border-label-pos=2 \
-    --border-label "🌳 Branches" \
+    --border-label "🌈 Branches" \
     --color hl:underline,hl+:underline \
     --preview 'git log --oneline --graph --date=short --color=always --pretty="format:%C(auto)%cd %h%d %s" $(sed s/^..// <<< {} | cut -d" " -f1) --' \
     --bind "alt-a:transform: [[ \$FZF_PROMPT == 'local branches> ' ]] &&
