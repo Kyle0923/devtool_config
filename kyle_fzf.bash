@@ -76,27 +76,38 @@ _fzf_complete_bookmark_post() {
 [ -n "$BASH" ] && complete -F _fzf_complete_bookmark -o default -o bashdefault bookmark bk
 
 ########################################################################
-# auto complete for git checkout <branch>
+# auto complete for cd
 _fzf_complete_c() {
-    _fzf_complete --no-multi --reverse --preview-window='right,50%,border-left' --prompt="./" \
+    TRIM_LS_SYMBOL="sed -E -e 's/[*=>@|]\$//'"
+    POP_LAST_DIR="sed -E -e 's+\/.*\/$+\/+'"
+    # if is dir, enter, otherwise accept current file
+    ENTER_DIR="[[ -d \$(echo \$FZF_PROMPT{}) ]] &&
+            echo \"change-prompt(\$(echo \$FZF_PROMPT{}))+reload(ls -a -F \$FZF_PROMPT{} | tail -n +3)+clear-query\" ||
+            echo \"become(echo \$FZF_PROMPT{} | $TRIM_LS_SYMBOL)\""
+    _fzf_complete --no-multi --reverse --preview-window='right,50%,border-left' --prompt="`pwd | sed -E -e 's+^\/\$++'`/" \
+    --height="90%" \
     --bind='ctrl-/:change-preview-window(down,50%,border-top|hidden|)' \
-    --ansi --no-sort \
+    --ansi --sort \
     --border-label-pos=2 \
-    --border-label "Path" \
-    --header 'Alt-Enter: accept path' \
+    --border-label "`pwd`" \
+    --header 'Alt-Enter: accept path; CTRL-W: go up' \
     --color hl:underline,hl+:underline \
-    --preview 'fzf_previewer {}' \
-    --bind "enter:transform: [[ -d \$(echo \$FZF_PROMPT{}/) ]] &&
-            echo \"change-prompt(\$(echo \$FZF_PROMPT{}/))+reload(ls -a \$FZF_PROMPT{})+clear-query \" " \
-    --bind "alt-enter:transform: echo \"become(echo \$FZF_PROMPT{}) \" " \
-    --bind "start:reload(ls -a .)" \
+    --preview "echo \$FZF_PROMPT{} | $TRIM_LS_SYMBOL | xargs fzf_previewer" \
+    --bind "enter:transform:$ENTER_DIR" \
+    --bind "tab:transform:$ENTER_DIR" \
+    --bind "left:transform:[[ -z '{q}' && \$(echo \$FZF_PROMPT{}) != '/' ]] &&
+            echo \"change-prompt(\$(dirname \$FZF_PROMPT | sed -E -e 's+^\/\$++')/)+reload(ls -a -F \$(dirname \$FZF_PROMPT) | tail -n +3)+clear-query\" ||
+            echo backward-char" \
+    --bind "right:transform:[[ -z '{q}' && -d \$(echo \$FZF_PROMPT{}) ]] &&
+            echo \"change-prompt(\$(echo \$FZF_PROMPT{}))+reload(ls -a -F \$FZF_PROMPT{} | tail -n +3)+clear-query\" ||
+            echo forward-char" \
+    --bind "ctrl-w:transform:[[ \$(echo \$FZF_PROMPT{}) != '/' ]] &&
+            echo \"change-prompt(\$(dirname \$FZF_PROMPT | sed -E -e 's+^\/\$++')/)+reload(ls -a -F \$(dirname \$FZF_PROMPT) | tail -n +3)+clear-query\"" \
+    --bind "alt-enter:transform:echo \"become(echo \$FZF_PROMPT)\"" \
+    --bind "start:reload(ls -a -F . | tail -n +3)" \
+    --bind="alt-left:preview-page-up,alt-right:preview-page-down,alt-up:preview-up,alt-down:preview-down" \
     -- "$@" < <(echo)
 }
-# --bind "enter:transform: echo \"reload(ls -a \$FZF_PROMPT{})+change-prompt(\$(echo \$FZF_PROMPT{}/) \" " \
-# --bind "alt-a:transform: echo \"change-border-label(💡 Commits on \$FZF_PROMPT)+change-prompt(current branch> ) \" " \
-# _fzf_complete_c_post() {
-#     sed 's/^..//' | cut -d' ' -f1
-# }
 [ -n "$BASH" ] && complete -F _fzf_complete_c -o default -o bashdefault c
 
 ########################################################################
