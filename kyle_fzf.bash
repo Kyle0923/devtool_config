@@ -78,19 +78,19 @@ _fzf_complete_bookmark_post() {
 ########################################################################
 # auto complete for cd
 _fzf_complete_c() {
-    TRIM_LS_SYMBOL="sed -E -e 's/[*=>@|]\$//'"
-    POP_LAST_DIR="sed -E -e 's+\/.*\/$+\/+'"
+    local TRIM_LS_SYMBOL="sed -E -e 's/[*=>@|]\$//'"
+    local POP_LAST_DIR="sed -E -e 's+\/.*\/$+\/+'"
     # if is dir, enter, otherwise accept current file
-    ENTER_DIR="[[ -d \$(echo \$FZF_PROMPT{}) ]] &&
+    local ENTER_DIR="[[ -d \$(echo \$FZF_PROMPT{}) ]] &&
             echo \"change-prompt(\$(echo \$FZF_PROMPT{}))+reload(ls -a -F \$FZF_PROMPT{} | tail -n +3)+clear-query\" ||
             echo \"become(echo \$FZF_PROMPT{} | $TRIM_LS_SYMBOL)\""
     _fzf_complete --no-multi --reverse --preview-window='right,50%,border-left' --prompt="`pwd | sed -E -e 's+^\/\$++'`/" \
-    --height="90%" \
+    --height="80%" \
     --bind='ctrl-/:change-preview-window(down,50%,border-top|hidden|)' \
     --ansi --sort \
     --border-label-pos=2 \
     --border-label "`pwd`" \
-    --header 'Alt-Enter: accept path; CTRL-W: go up' \
+    --header 'Alt-Enter: accept path; CTRL-W: go up; Alt-A: show all files' \
     --color hl:underline,hl+:underline \
     --preview "echo \$FZF_PROMPT{} | $TRIM_LS_SYMBOL | xargs fzf_previewer" \
     --bind "enter:transform:$ENTER_DIR" \
@@ -103,12 +103,46 @@ _fzf_complete_c() {
             echo forward-char" \
     --bind "ctrl-w:transform:[[ \$(echo \$FZF_PROMPT{}) != '/' ]] &&
             echo \"change-prompt(\$(dirname \$FZF_PROMPT | sed -E -e 's+^\/\$++')/)+reload(ls -a -F \$(dirname \$FZF_PROMPT) | tail -n +3)+clear-query\"" \
+    --bind "alt-a:reload(cd \$FZF_PROMPT && fd -I | xargs ls -F -d | sed -E -e 's+^./++')" \
     --bind "alt-enter:transform:echo \"become(echo \$FZF_PROMPT)\"" \
     --bind "start:reload(ls -a -F . | tail -n +3)" \
     --bind="alt-left:preview-page-up,alt-right:preview-page-down,alt-up:preview-up,alt-down:preview-down" \
     -- "$@" < <(echo)
 }
 [ -n "$BASH" ] && complete -F _fzf_complete_c -o default -o bashdefault c
+
+fzf_interactive_cd() {
+    local TRIM_LS_SYMBOL="sed -E -e 's/[*=>@|]\$//'"
+    local POP_LAST_DIR="sed -E -e 's+\/.*\/$+\/+'"
+    # if is dir, enter, otherwise accept current file
+    local ENTER_DIR="[[ -d \$(echo \$FZF_PROMPT{}) ]] &&
+            echo \"change-prompt(\$(echo \$FZF_PROMPT{}))+reload(ls -a -F \$FZF_PROMPT{} | tail -n +3)+clear-query\" ||
+            echo \"become(echo \$FZF_PROMPT{} | $TRIM_LS_SYMBOL)\""
+    : | fzf --no-multi --reverse --preview-window='right,50%,border-left' --prompt="`pwd | sed -E -e 's+^\/\$++'`/" \
+    --height="80%" \
+    --bind='ctrl-/:change-preview-window(down,50%,border-top|hidden|)' \
+    --ansi --sort \
+    --border-label-pos=2 \
+    --border-label "`pwd`" \
+    --header 'Alt-Enter: accept path; CTRL-W: go up; Alt-A: show all files' \
+    --color hl:underline,hl+:underline \
+    --preview "echo \$FZF_PROMPT{} | $TRIM_LS_SYMBOL | xargs fzf_previewer" \
+    --bind "enter:transform:$ENTER_DIR" \
+    --bind "tab:transform:$ENTER_DIR" \
+    --bind "left:transform:[[ -z '{q}' && \$(echo \$FZF_PROMPT{}) != '/' ]] &&
+            echo \"change-prompt(\$(dirname \$FZF_PROMPT | sed -E -e 's+^\/\$++')/)+reload(ls -a -F \$(dirname \$FZF_PROMPT) | tail -n +3)+clear-query\" ||
+            echo backward-char" \
+    --bind "right:transform:[[ -z '{q}' && -d \$(echo \$FZF_PROMPT{}) ]] &&
+            echo \"change-prompt(\$(echo \$FZF_PROMPT{}))+reload(ls -a -F \$FZF_PROMPT{} | tail -n +3)+clear-query\" ||
+            echo forward-char" \
+    --bind "ctrl-w:transform:[[ \$(echo \$FZF_PROMPT{}) != '/' ]] &&
+            echo \"change-prompt(\$(dirname \$FZF_PROMPT | sed -E -e 's+^\/\$++')/)+reload(ls -a -F \$(dirname \$FZF_PROMPT) | tail -n +3)+clear-query\"" \
+    --bind "alt-a:reload(cd \$FZF_PROMPT && fd -I | xargs ls -F -d | sed -E -e 's+^./++')" \
+    --bind "alt-enter:transform:echo \"become(echo \$FZF_PROMPT)\"" \
+    --bind "start:reload(ls -a -F . | tail -n +3)" \
+    --bind="alt-left:preview-page-up,alt-right:preview-page-down,alt-up:preview-up,alt-down:preview-down" \
+
+}
 
 ########################################################################
 # auto completion for git checkout, adapted from https://github.com/junegunn/fzf-git.sh

@@ -49,7 +49,9 @@ fi
 function c() {
     if [ $# -eq 0 ] ; then
         # no arguments
-        source ranger
+        # source ranger
+        local CD_PATH=`fzf_interactive_cd`
+        [[ -n $CD_PATH ]] && c $CD_PATH
     elif [ $1 == '-' ] ; then
         builtin cd -
     elif [ -d $1 ] ; then
