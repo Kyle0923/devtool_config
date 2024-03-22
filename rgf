@@ -2,14 +2,25 @@
 
 # adapted from https://github.com/junegunn/fzf/blob/master/ADVANCED.md#using-fzf-as-interactive-ripgrep-launcher
 
-# interactive Ripgrep
-# on 'Enter' open the file in Vim
-# Switch between Ripgrep mode and fzf filtering mode (CTRL-T)
+## Interactive Ripgrep
+# on 'Enter' open the file in less
+# Switch between Ripgrep mode and fzf filtering mode (Ctrl+T)
+# Nested search with (Ctrl+F)
 
-# usage:
-# rgf [rg options] file search_words/regexes...
+## Usage
+# rgf [options] file search_words/regexes...
+#
+# `rgf` similar to `rg | fzf`, search through all files
+# `rgf [filename]` search in a file, similar to `less`
+# `CMD | rgf` pipe the output of CMD to `rgf`
 
-# known issue
+## Prerequisite
+# rg: https://github.com/BurntSushi/ripgrep
+# fzf: https://github.com/junegunn/fzf
+# bat: https://github.com/sharkdp/bat
+# companion script fzf_previewer
+
+## known issue
 # 1. appears to relate to nth=3.., when we search in fzf mode and then switch back to rg, if the regex is not found,
 #    the search window doesn't display correctly. it appears fzf attempt to search through the 'not found' message. changing query will restore
 # 2. ctrl-F no response, this can happen when the number of records is too large. Try to apply more fileters to reduce the searching pool
@@ -24,6 +35,9 @@ usage:
 rgf [options] file patterns...  # both file and pattern are optional
 rgf [options] patterns...       # if the first positional parameter is not a file, it will be treated as part of the pattern
 CMD | rgf [options]             # can also use from pipe
+
+In rg mode, you can use '!' to invert the search, e.g., rg> !foo will match anything but foo
+
 
 options:
     -h|--help       display this help message
@@ -136,7 +150,7 @@ main() {
         --bind "end:last" \
         --bind 'ctrl-/:change-preview-window(right|up|hidden|)' \
         --bind "start:reload($RG_PREFIX {q} $file_path || $NOT_FOUND_PROMPT)+unbind(change)" \
-        --bind "change:reload:sleep 0.1; $RG_PREFIX {q} $file_path || $NOT_FOUND_PROMPT" \
+        --bind "change:reload:sleep 0.1; ([[ {q} =~ ^! ]] && $RG_PREFIX -v \"\$(echo {q} | sed -E -e 's/^!//')\" $file_path || $RG_PREFIX {q} $file_path) || $NOT_FOUND_PROMPT" \
         --bind "ctrl-t:transform:[[ ! \$FZF_PROMPT =~ 'rg>' ]] &&
                 echo \"rebind(change)+disable-search+reload($RG_PREFIX {q} $file_path || $NOT_FOUND_PROMPT)+change-prompt(${prefix}rg> )\" ||
                 echo \"unbind(change)+reload($RG_PREFIX '' $file_path )+change-prompt(${prefix}fzf> )+enable-search\" " \
