@@ -19,7 +19,8 @@ source ~/tools/devtool_config/kyle_fzf.bash
 function gcoc() {
     if [ $# -eq 0 ] ; then
         # no arguments
-        _fzf_git_hashes --no-multi | xargs git checkout
+        local dest=`_fzf_git_hashes --no-multi`
+        [[ -n "$dest" ]] && git checkout $dest
     else
         git checkout "$@"
     fi
@@ -29,7 +30,8 @@ function gcoc() {
 function gcob() {
     if [ $# -eq 0 ] ; then
         # no arguments
-        _fzf_git_branches --no-multi | xargs git checkout
+        local dest=`_fzf_git_branches --no-multi`
+        [[ -n "$dest" ]] && git checkout $dest
     else
         git checkout "$@"
     fi
@@ -71,16 +73,24 @@ REPO() {
 
 bookmark() {
     # REPO .  # reset REPO_ROOT
-    registry_path="$HOME/.config/kyle/bookmark"
-    if [ "$NO_COLOR_OUTPUT" != true ]; then
-        local YELLOW='\033[1;33m'
-        local RED='\033[0;31m'
-        local BLUE='\033[0;34m'
-        local COMMENT='\033[0;32m'
-        local NC='\033[0m' # No Color
-    fi
+    local registry_path="$HOME/.config/kyle/bookmark"
+
+    local YELLOW='\033[1;33m'
+    local RED='\033[0;31m'
+    local BLUE='\033[0;34m'
+    local COMMENT='\033[0;32m'
+    local NC='\033[0m' # No Color
+
     if (($# == 0)); then
-        # no arg, print bookmark
+        # no arg, print bookmark to fzf
+        local dest=`bookmark --list | tail -n +2 | \
+                    fzf --ansi --height="50%" --reverse --prompt='bookmark> ' --bind 'change:first' --preview 'fzf_previewer {}' --preview-window 'up:2' | \
+                    awk '{print $1}' | sed -e 's/\[\|\]//g'`
+        [[ -n "$dest" ]] && bookmark $dest || bookmark --list
+        return
+    fi # no arg
+    if [[ $1 == '-l' || $1 == '--list' ]]; then
+        # print bookmark
         echo -e ">> in ${YELLOW}$registry_path${NC}"
         local n=1
         while IFS= read -r line; do
@@ -101,6 +111,7 @@ bookmark() {
     if [[ "$@" =~ $regex ]]; then
         if (($1 > 0)); then
             # cd to the corresponding directory
+            echo -e "cd ${YELLOW}$(sed -n -e "$1p" $registry_path | sed -e "s/\s*\#.*$//" -e 's/\\/\\\\/g') ${@:2}${NC}"
             cd $(eval echo $(sed -n -e "$1p" $registry_path))
         elif (($1 < 0)); then
             # remove the entry
@@ -125,14 +136,22 @@ bookmark() {
 
 note() {
     local registry_path="$HOME/.config/kyle/note"
-    if [ "$NO_COLOR_OUTPUT" != true ]; then
-        local YELLOW='\033[1;33m'
-        local RED='\033[0;31m'
-        local BLUE='\033[0;34m'
-        local COMMENT='\033[0;32m'
-        local NC='\033[0m' # No Color
-    fi
+
+    local YELLOW='\033[1;33m'
+    local RED='\033[0;31m'
+    local BLUE='\033[0;34m'
+    local COMMENT='\033[0;32m'
+    local NC='\033[0m' # No Color
+
     if (($# == 0)); then
+        # no arg, print note to fzf
+        local cmd=`note --list | tail -n +2 | \
+                    fzf --ansi --height="50%" --reverse --prompt='note> ' --bind 'change:first' --preview 'fzf_previewer {}' --preview-window 'up:2' | \
+                    awk '{print $1}' | sed -e 's/\[\|\]//g'`
+        [[ -n "$cmd" ]] && note $cmd || note --list
+        return
+    fi
+    if [[ $1 == '-l' || $1 == '--list' ]]; then
         # no arg, print note
         echo -e ">> in ${YELLOW}$registry_path${NC}"
         local n=1
@@ -145,6 +164,7 @@ note() {
         done < $registry_path
         return
     fi
+
     local regex='^-?[0-9]+$'
     if [[ "$@" =~ $regex ]]; then
         if (($1 > 0)); then

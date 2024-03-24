@@ -59,7 +59,7 @@ export FZF_DEFAULT_OPTS='--bind="alt-left:preview-page-up,alt-right:preview-page
 
 ########################################################################
 _fzf_complete_note() {
-    _fzf_complete --multi --reverse --prompt="note> " -- "$@" < <(NO_COLOR_OUTPUT=true note | tail -n +2)
+    _fzf_complete --ansi --bind 'change:first' --reverse --prompt="note> " -- "$@" < <(note --list | tail -n +2)
 }
 _fzf_complete_note_post() {
     awk '{print $1}' | sed -e 's/\[\|\]//g'
@@ -68,7 +68,7 @@ _fzf_complete_note_post() {
 
 ########################################################################
 _fzf_complete_bookmark() {
-    _fzf_complete --multi --reverse --prompt="bookmark> " -- "$@" < <(NO_COLOR_OUTPUT=true bookmark | tail -n +2)
+    _fzf_complete --ansi --bind 'change:first' --reverse --prompt="bookmark> " -- "$@" < <(bookmark --list | tail -n +2)
 }
 _fzf_complete_bookmark_post() {
     awk '{print $1}' | sed -e 's/\[\|\]//g'
@@ -89,6 +89,7 @@ _fzf_complete_c() {
     --bind='ctrl-/:change-preview-window(down,50%,border-top|hidden|)' \
     --ansi --sort \
     --border-label-pos=2 \
+    --bind 'change:first' \
     --border-label "`pwd`" \
     --header 'Alt-Enter: accept path; CTRL-W: go up; Alt-A: show all files' \
     --color hl:underline,hl+:underline \
@@ -123,6 +124,7 @@ fzf_interactive_cd() {
     --bind='ctrl-/:change-preview-window(down,50%,border-top|hidden|)' \
     --ansi --sort \
     --border-label-pos=2 \
+    --bind 'change:first' \
     --border-label "`pwd`" \
     --header 'Alt-Enter: accept path; CTRL-W: go up; Alt-A: show all files' \
     --color hl:underline,hl+:underline \
@@ -155,6 +157,7 @@ _fzf_complete_gcoc() {
     _fzf_complete --no-multi --reverse --preview-window='right,50%,border-left' --prompt="current branch> " \
     --bind='ctrl-/:change-preview-window(down,50%,border-top|hidden|)' \
     --ansi --no-sort \
+    --bind 'change:first' \
     --header 'Alt-A: toggle all commits / current branch commits' \
     --border-label-pos=2 \
     --border-label "💡 Commits on $current_branch" \
@@ -179,6 +182,7 @@ _fzf_complete_gcob() {
     _fzf_complete --no-multi --reverse --preview-window='right,50%,border-left' --prompt="local branches> " \
     --bind='ctrl-/:change-preview-window(down,50%,border-top|hidden|)' \
     --ansi --no-sort \
+    --bind 'change:first' \
     --header 'Alt-A: switch between local and all branches' \
     --border-label-pos=2 \
     --border-label "🌈 Branches" \
