@@ -84,7 +84,7 @@ bookmark() {
     if (($# == 0)); then
         # no arg, print bookmark to fzf
         local dest=`bookmark --list | tail -n +2 | \
-                    fzf --ansi --height="50%" --reverse --prompt='bookmark> ' --bind 'change:first' --preview 'fzf_previewer {}' --preview-window 'up:2' | \
+                    fzf --ansi --height="50%" --reverse --prompt='bookmark> ' --bind 'change:first' --preview 'fzf_previewer {}' --preview-window 'up:2' --bind 'ctrl-d:become:echo -{}' --header 'Ctrl+D: delete' | \
                     awk '{print $1}' | sed -e 's/\[\|\]//g'`
         [[ -n "$dest" ]] && bookmark $dest || bookmark --list
         return
@@ -129,7 +129,7 @@ bookmark() {
         sort $registry_path | uniq > "${registry_path}_temp"
         mv "${registry_path}_temp" $registry_path
         # sed -i -e "s+$(REPO .)+\\\$\(REPO\)+" $registry_path # replace base directory with variable, useful in git worktree workflow
-        bookmark
+        bookmark --list
 
     fi
 }
@@ -146,7 +146,7 @@ note() {
     if (($# == 0)); then
         # no arg, print note to fzf
         local cmd=`note --list | tail -n +2 | \
-                    fzf --ansi --height="50%" --reverse --prompt='note> ' --bind 'change:first' --preview 'fzf_previewer {}' --preview-window 'up:2' | \
+                    fzf --ansi --height="50%" --reverse --prompt='note> ' --bind 'change:first' --preview 'fzf_previewer {}' --preview-window 'up:2' --bind 'ctrl-d:become:echo -{}' --header 'Ctrl+D: delete' | \
                     awk '{print $1}' | sed -e 's/\[\|\]//g'`
         [[ -n "$cmd" ]] && note $cmd || note --list
         return
@@ -183,7 +183,7 @@ note() {
         echo $@ >> $registry_path
         sort $registry_path | uniq > "${registry_path}_temp"
         mv "${registry_path}_temp" $registry_path
-        note
+        note --list
     fi
 }
 
