@@ -178,7 +178,7 @@ main() {
         --preview-window "up,60%,border-bottom,wrap,+$LINE_NUM+3/3$PREVIEW_HEADER_LINE" \
         --bind "enter:execute( [[ {} == \"\$($NOT_FOUND_PROMPT)\" ]] && exit 0 ; $PATTERN_SETUP ; \
                     $PRETTY_BAT $PREVIEW_FILE --highlight-line $LINE_NUM --pager \"less -R +$LINE_NUM \$PATTERN\" 2>/dev/null ; (echo peek: {} $SILENT) | $TRUNCATE_LINE )" \
-        --bind "alt-enter:become( [[ $PASS_THROUGH_MODE == '0' ]] && printf '%s\n' {+1} || printf '%s\n' {+2..} )" \
+        --bind "alt-enter:become( [[ $PASS_THROUGH_MODE == '0' ]] && printf '%s\n' {+1..2} || printf '%s\n' {+2..} )" \
         $DISABLE_FZF \
         $FZF_OPT \
 
