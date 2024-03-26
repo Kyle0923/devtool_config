@@ -70,7 +70,7 @@ EOF
 SILENT=''
 FZF_OPT=""
 RG_PREFIX="rg --line-number --no-heading --color=always --smart-case"
-NOT_FOUND_PROMPT="echo '::[[ regex:/{q}/ not found ]]::'" # nth=3.. will fail without the first 2 colons, the last two just for symmetric
+NOT_FOUND_PROMPT="echo ::[[ regex:/{q}/ not found ]]::" # nth=3.. will fail without the first 2 colons, the last two just for symmetric
 PRETTY_BAT='bat --color=always --terminal-width $(tput cols) --paging=always'
 PIPE_BAT_OPT=''
 PREVIEW_HEADER_LINE=',~3'
@@ -152,7 +152,7 @@ main() {
         --bind "start:reload($RG_PREFIX {q} $file_path || $NOT_FOUND_PROMPT)+unbind(change)" \
         --bind "change:reload:sleep 0.1; ([[ {q} =~ ^! ]] && $RG_PREFIX -v \"\$(echo {q} | sed -E -e 's/^!//')\" $file_path || $RG_PREFIX {q} $file_path) || $NOT_FOUND_PROMPT" \
         --bind "ctrl-t:transform:[[ ! \$FZF_PROMPT =~ 'rg>' ]] &&
-                echo \"rebind(change)+disable-search+reload($RG_PREFIX {q} $file_path || $NOT_FOUND_PROMPT)+change-prompt(${prefix}rg> )\" ||
+                echo \"disable-search+rebind(change)+reload($RG_PREFIX {q} $file_path || $NOT_FOUND_PROMPT)+change-prompt(${prefix}rg> )\" ||
                 echo \"unbind(change)+reload($RG_PREFIX '' $file_path )+change-prompt(${prefix}fzf> )+enable-search\" " \
         --bind "ctrl-f:select-all+execute($PREFIX_SETUP ; printf '%s\n' {+} | rgf --PREFIX \"${prefix}\$new_prefix\" --PASS-THROUGH $PASS_THROUGH_MODE $SILENT_OPT )+clear-selection" \
         --color "hl:-1:underline,hl+:-1:underline:reverse" \

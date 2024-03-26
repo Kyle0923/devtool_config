@@ -7,7 +7,7 @@ alias crepo='cd $REPO_ROOT'
 alias rp='realpath'
 alias ra='ranger'
 alias bashrc_source='source ~/.bashrc'
-alias ..='cd ..'
+alias ..='c ..'
 
 export RANGER_LOAD_DEFAULT_RC=FALSE
 
@@ -56,6 +56,12 @@ function c() {
         [[ -n $CD_PATH ]] && c $CD_PATH
     elif [ $1 == '-' ] ; then
         builtin cd -
+    elif [[ $1 == '..' ]] && [[ $# -gt 1 ]] ; then
+        # support '.. .. ..' and '.. 3'
+        local prefix='.' ; shift
+        [[ $1 == '..' ]] && c ..$(printf "/%s" "$@") && return
+        [[ $1 =~ ^[0-9]+$ ]] && for counter in $(seq 1 $1); do prefix="$prefix/.."; done && c $prefix
+        return
     elif [ -d $1 ] ; then
         # argument is a directory
         builtin cd "$1"
@@ -84,7 +90,8 @@ bookmark() {
     if (($# == 0)); then
         # no arg, print bookmark to fzf
         local dest=`bookmark --list | tail -n +2 | \
-                    fzf --ansi --height="50%" --reverse --prompt='bookmark> ' --bind 'change:first' --preview 'fzf_previewer {}' --preview-window 'up:2' --bind 'ctrl-d:become:echo -{}' --header 'Ctrl+D: delete' | \
+                    fzf --ansi --height="50%" --reverse --prompt='bookmark> ' --bind 'change:first' --preview 'fzf_previewer {}' --preview-window 'up:2' \
+                    --bind 'ctrl-d:become:echo -{}' --header 'Ctrl+D: delete' --tiebreak 'chunk,first' | \
                     awk '{print $1}' | sed -e 's/\[\|\]//g'`
         [[ -n "$dest" ]] && bookmark $dest || bookmark --list
         return
@@ -146,9 +153,10 @@ note() {
     if (($# == 0)); then
         # no arg, print note to fzf
         local cmd=`note --list | tail -n +2 | \
-                    fzf --ansi --height="50%" --reverse --prompt='note> ' --bind 'change:first' --preview 'fzf_previewer {}' --preview-window 'up:2' --bind 'ctrl-d:become:echo -{}' --header 'Ctrl+D: delete' | \
+                    fzf --ansi --height="50%" --reverse --prompt='note> ' --bind 'change:first' --preview 'fzf_previewer {}' --preview-window 'up:2' \
+                    --bind 'ctrl-d:become:echo -{}' --header 'Ctrl+D: delete' --tiebreak 'chunk,first' | \
                     awk '{print $1}' | sed -e 's/\[\|\]//g'`
-        [[ -n "$cmd" ]] && note $cmd || note --list
+        [[ -n "$cmd" ]] && echo "note $cmd" && note $cmd || note --list
         return
     fi
     if [[ $1 == '-l' || $1 == '--list' ]]; then
