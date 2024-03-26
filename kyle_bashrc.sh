@@ -96,7 +96,7 @@ bookmark() {
         # no arg, print bookmark to fzf
         local dest=`bookmark --list | tail -n +2 | \
                     fzf --ansi --height="50%" --reverse --prompt='bookmark> ' --bind 'change:first' --preview 'fzf_previewer {}' --preview-window 'up:2' \
-                    --bind 'ctrl-d:become:echo -{}' --header 'Ctrl+D: delete' --tiebreak 'chunk,first' | \
+                    --bind 'ctrl-d:become:echo -{}' --header 'Ctrl+D: delete' --tiebreak 'chunk,begin' | \
                     awk '{print $1}' | sed -e 's/\[\|\]//g'`
         [[ -n "$dest" ]] && bookmark $dest || bookmark --list
         return
@@ -159,7 +159,7 @@ note() {
         # no arg, print note to fzf
         local cmd=`note --list | tail -n +2 | \
                     fzf --ansi --height="50%" --reverse --prompt='note> ' --bind 'change:first' --preview 'fzf_previewer {}' --preview-window 'up:2' \
-                    --bind 'ctrl-d:become:echo -{}' --header 'Ctrl+D: delete' --tiebreak 'chunk,first' | \
+                    --bind 'ctrl-d:become:echo -{}' --header 'Ctrl+D: delete' --tiebreak 'chunk,begin' | \
                     awk '{print $1}' | sed -e 's/\[\|\]//g'`
         [[ -n "$cmd" ]] && echo "note $cmd" && note $cmd || note --list
         return
