@@ -71,11 +71,16 @@ function c() {
     fi
 }
 
-REPO_ROOT=~
-REPO() {
-    REPO_ROOT=$(git rev-parse --show-toplevel)
-    echo "$REPO_ROOT"
-}
+# lmk() {
+#     local PATTERN="make(\[[0-9]+\])?: \*\*\*"
+#     rgf --rg $1 "$PATTERN"
+# }
+
+# REPO_ROOT=~
+# REPO() {
+#     REPO_ROOT=$(git rev-parse --show-toplevel)
+#     echo "$REPO_ROOT"
+# }
 
 bookmark() {
     # REPO .  # reset REPO_ROOT

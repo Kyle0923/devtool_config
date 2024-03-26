@@ -42,6 +42,8 @@ In rg mode, you can use '!' to invert the search, e.g., rg> !foo will match anyt
 options:
     -h|--help       display this help message
 
+    --rg            start in rg mode, default start up mode is fzf
+
     --header [n]    freeze the first n line as header, n is default to 1 when not provided, e.g., ps -ef | rgf --header
                     a convenient shothand for fzf's --header-lines option
 
@@ -67,6 +69,7 @@ EOF
     exit 0
 }
 
+PASS_THROUGH_OPT=''
 SILENT=''
 FZF_OPT=""
 RG_PREFIX="rg --line-number --no-heading --color=always --smart-case"
@@ -83,6 +86,11 @@ LINE_NUM='{2}'
 N_TH='3..'
 HEADER_OPT=''
 
+# for --rg
+DISABLE_FZF=''
+UNBIND_CHANGE='+unbind(change)'
+START_PROMPT='fzf'
+
 # parse options
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -90,8 +98,15 @@ while [[ $# -gt 0 ]]; do
             show_help
             exit 0
             ;;
+        --rg)
+            PASS_THROUGH_OPT="$PASS_THROUGH_OPT --rg"
+            DISABLE_FZF='--disabled'
+            UNBIND_CHANGE=''
+            START_PROMPT='rg'
+            shift
+            ;;
         -s|--silent)
-            SILENT_OPT='-s'
+            PASS_THROUGH_OPT="$PASS_THROUGH_OPT -s"
             SILENT='>/dev/null'
             PREFIX_SETUP="$PREFIX_SETUP $SILENT"
             shift
@@ -149,14 +164,14 @@ main() {
         --bind "home:first" \
         --bind "end:last" \
         --bind 'ctrl-/:change-preview-window(right|up|hidden|)' \
-        --bind "start:reload($RG_PREFIX {q} $file_path || $NOT_FOUND_PROMPT)+unbind(change)" \
+        --bind "start:reload($RG_PREFIX {q} $file_path || $NOT_FOUND_PROMPT)$UNBIND_CHANGE" \
         --bind "change:reload:sleep 0.1; ([[ {q} =~ ^! ]] && $RG_PREFIX -v \"\$(echo {q} | sed -E -e 's/^!//')\" $file_path || $RG_PREFIX {q} $file_path) || $NOT_FOUND_PROMPT" \
         --bind "ctrl-t:transform:[[ ! \$FZF_PROMPT =~ 'rg>' ]] &&
                 echo \"disable-search+rebind(change)+reload($RG_PREFIX {q} $file_path || $NOT_FOUND_PROMPT)+change-prompt(${prefix}rg> )\" ||
                 echo \"unbind(change)+reload($RG_PREFIX '' $file_path )+change-prompt(${prefix}fzf> )+enable-search\" " \
-        --bind "ctrl-f:select-all+execute($PREFIX_SETUP ; printf '%s\n' {+} | rgf --PREFIX \"${prefix}\$new_prefix\" --PASS-THROUGH $PASS_THROUGH_MODE $SILENT_OPT )+clear-selection" \
+        --bind "ctrl-f:select-all+execute($PREFIX_SETUP ; printf '%s\n' {+} | rgf --PREFIX \"${prefix}\$new_prefix\" --PASS-THROUGH $PASS_THROUGH_MODE $PASS_THROUGH_OPT )+clear-selection" \
         --color "hl:-1:underline,hl+:-1:underline:reverse" \
-        --prompt "${prefix}fzf> " \
+        --prompt "${prefix}${START_PROMPT}> " \
         --delimiter : \
         --header 'CTRL-T: toggle rg/fzf, CTRL-F: nested search' \
         --preview "bat $PIPE_BAT_OPT --terminal-width \$FZF_PREVIEW_COLUMNS --color=always $PREVIEW_FILE --highlight-line $LINE_NUM 2>/dev/null || fzf_previewer {}" \
@@ -164,6 +179,7 @@ main() {
         --bind "enter:execute( [[ {} == \"\$($NOT_FOUND_PROMPT)\" ]] && exit 0 ; $PATTERN_SETUP ; \
                     $PRETTY_BAT $PREVIEW_FILE --highlight-line $LINE_NUM --pager \"less -R +$LINE_NUM \$PATTERN\" 2>/dev/null ; (echo peek: {} $SILENT) | $TRUNCATE_LINE )" \
         --bind "alt-enter:become( [[ $PASS_THROUGH_MODE == '0' ]] && printf '%s\n' {+1} || printf '%s\n' {+2..} )" \
+        $DISABLE_FZF \
         $FZF_OPT \
 
 }
