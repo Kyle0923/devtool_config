@@ -77,7 +77,7 @@ NOT_FOUND_PROMPT="echo ::[[ regex:/{q}/ not found ]]::" # nth=3.. will fail with
 PRETTY_BAT='bat --color=always --terminal-width $(tput cols) --paging=always'
 PIPE_BAT_OPT=''
 PREVIEW_HEADER_LINE=',~3'
-PATTERN_SETUP="PATTERN=\$([ -z {q} ] && echo '' || echo \"-p \$(echo '{q}' | awk '{print \$1}')\")"
+PATTERN_SETUP="PATTERN=\$([ -z {q} ] && echo '' || echo \"-p \$(echo {q} | awk '{print \$1}')\")"
 PROMPT_SETUP="PROMPT=\$([[ \$FZF_PROMPT =~ 'rg>' ]] && echo 'rg:' || echo 'fzf:') "
 PREFIX_SETUP="$PROMPT_SETUP ; new_prefix=\$([ -z \"{q}\" ] && echo '' || echo \"[{q}]\") ; echo \$PROMPT \"{q}\" "
 TRUNCATE_LINE="awk '{ if (length(\$0) > 201) print substr(\$0, 1, 201) \" [...]\"; else print \$0; }'"
@@ -175,7 +175,7 @@ main() {
         --delimiter : \
         --header 'CTRL-T: toggle rg/fzf, CTRL-F: nested search' \
         --preview "bat $PIPE_BAT_OPT --terminal-width \$FZF_PREVIEW_COLUMNS --color=always $PREVIEW_FILE --highlight-line $LINE_NUM 2>/dev/null || fzf_previewer {}" \
-        --preview-window "up,60%,border-bottom,wrap,+$LINE_NUM+3/3$PREVIEW_HEADER_LINE" \
+        --preview-window "up,80%,border-bottom,wrap,+$LINE_NUM+3/3$PREVIEW_HEADER_LINE" \
         --bind "enter:execute( [[ {} == \"\$($NOT_FOUND_PROMPT)\" ]] && exit 0 ; $PATTERN_SETUP ; \
                     $PRETTY_BAT $PREVIEW_FILE --highlight-line $LINE_NUM --pager \"less -R +$LINE_NUM \$PATTERN\" 2>/dev/null ; (echo peek: {} $SILENT) | $TRUNCATE_LINE )" \
         --bind "alt-enter:become( [[ $PASS_THROUGH_MODE == '0' ]] && printf '%s\n' {+1..2} || printf '%s\n' {+2..} )" \
