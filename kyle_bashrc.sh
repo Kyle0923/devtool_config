@@ -161,7 +161,13 @@ note() {
                     fzf --ansi --height="50%" --reverse --prompt='note> ' --bind 'change:first' --preview 'fzf_previewer {}' --preview-window 'up:2' \
                     --bind 'ctrl-d:become:echo -{}' --header 'Ctrl+D: delete' --tiebreak 'chunk,begin' | \
                     awk '{print $1}' | sed -e 's/\[\|\]//g'`
-        [[ -n "$cmd" ]] && echo "note $cmd" && note $cmd || note --list
+        if [[ -n "$cmd" ]]; then
+            echo "note $cmd"
+            history -s "note $cmd"
+            note $cmd
+        else
+            note --list
+        fi
         return
     fi
     if [[ $1 == '-l' || $1 == '--list' ]]; then
@@ -185,6 +191,7 @@ note() {
             [ $$ -ne $BASHPID ] && local bg_suffix=' &'
             echo -e "\n${YELLOW}$(sed -n -e "$1p" $registry_path | sed -e "s/\s*\#.*$//" -e 's/\\/\\\\/g') ${@:2}${NC}$bg_suffix\n"
             eval "$(sed -n -e "$1p" $registry_path | sed -e "s/\s*\#.*$//") ${@:2}"
+            history -s "$(sed -n -e "$1p" $registry_path | sed -e "s/\s*\#.*$//") ${@:2}"
         elif (($1 < 0)); then
             # remove the entry
             local n=$((-$1))

@@ -21,10 +21,9 @@
 # companion script fzf_previewer
 
 ## known issue
-# 1. appears to relate to nth=3.., when we search in fzf mode and then switch back to rg, if the regex is not found,
-#    the search window doesn't display correctly. it appears fzf attempt to search through the 'not found' message. changing query will restore
-# 2. ctrl-F no response, this can happen when the number of records is too large. Try to apply more fileters to reduce the searching pool
-# 3. in nested search mode, rg will try to match filename, no solution since rg doesn't have option similar to fzf's nth option, https://github.com/BurntSushi/ripgrep/discussions/2756
+# 1. ctrl-F no response, this can happen when the number of records is too large. Try to apply more fileters to reduce the searching pool
+# 2. in nested search mode, rg will match filename, while it is possible to manipulate the regex to skip filename:line_num, I decided to
+#    keep this behaviour to provide the ability to filter over filenames
 
 
 show_help() {
@@ -73,13 +72,13 @@ PASS_THROUGH_OPT=''
 SILENT=''
 FZF_OPT=""
 RG_PREFIX="rg --line-number --no-heading --color=always --smart-case"
-NOT_FOUND_PROMPT="echo ::[[ regex:/{q}/ not found ]]::" # nth=3.. will fail without the first 2 colons, the last two just for symmetric
+NOT_FOUND_PROMPT="echo [[ regex:/{q}/ not found ]]"
 PRETTY_BAT='bat --color=always --terminal-width $(tput cols) --paging=always'
 PIPE_BAT_OPT=''
 PREVIEW_HEADER_LINE=',~3'
-PATTERN_SETUP="PATTERN=\$([ -z {q} ] && echo '' || echo \"-p \$(echo {q} | awk '{print \$1}')\")"
+PATTERN_SETUP="PATTERN=\$([ -z {q} ] && echo '' || [[ \$FZF_PROMPT =~ 'rg>' ]] && echo \"-p {q}\" | sed -E -e 's+\\\\d+[0-9]+' || echo \"-p \$(echo {q} | awk '{print \$NF}')\")"
 PROMPT_SETUP="PROMPT=\$([[ \$FZF_PROMPT =~ 'rg>' ]] && echo 'rg:' || echo 'fzf:') "
-PREFIX_SETUP="$PROMPT_SETUP ; new_prefix=\$([ -z \"{q}\" ] && echo '' || echo \"[{q}]\") ; echo \$PROMPT \"{q}\" "
+PREFIX_SETUP="$PROMPT_SETUP ; new_prefix=\$([ -z {q} ] && echo '' || echo [{q}]) ; echo \$PROMPT {q} "
 TRUNCATE_LINE="awk '{ if (length(\$0) > 201) print substr(\$0, 1, 201) \" [...]\"; else print \$0; }'"
 PREVIEW_FILE='{1}'
 LINE_NUM='{2}'
@@ -167,7 +166,7 @@ main() {
         --bind "start:reload($RG_PREFIX {q} $file_path || $NOT_FOUND_PROMPT)$UNBIND_CHANGE" \
         --bind "change:reload:sleep 0.1; ([[ {q} =~ ^! ]] && $RG_PREFIX -v \"\$(echo {q} | sed -E -e 's/^!//')\" $file_path || $RG_PREFIX {q} $file_path) || $NOT_FOUND_PROMPT" \
         --bind "ctrl-t:transform:[[ ! \$FZF_PROMPT =~ 'rg>' ]] &&
-                echo \"disable-search+rebind(change)+reload($RG_PREFIX {q} $file_path || $NOT_FOUND_PROMPT)+change-prompt(${prefix}rg> )\" ||
+                echo \"disable-search+rebind(change)+reload($RG_PREFIX \\{q} $file_path || $NOT_FOUND_PROMPT)+change-prompt(${prefix}rg> )\" ||
                 echo \"unbind(change)+reload($RG_PREFIX '' $file_path )+change-prompt(${prefix}fzf> )+enable-search\" " \
         --bind "ctrl-f:select-all+execute($PREFIX_SETUP ; printf '%s\n' {+} | rgf --PREFIX \"${prefix}\$new_prefix\" --PASS-THROUGH $PASS_THROUGH_MODE $PASS_THROUGH_OPT )+clear-selection" \
         --color "hl:-1:underline,hl+:-1:underline:reverse" \
