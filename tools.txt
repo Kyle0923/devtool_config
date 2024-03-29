@@ -4,8 +4,10 @@ tmux
 fzf <- git install
 fzf-git <- remove bindings, clone https://github.com/junegunn/fzf-git.sh
 xsel
-batcat <- ln to bat
+batcat <- https://github.com/sharkdp/bat/releases
 ranger <- git intall
     https://github.com/ranger/ranger/wiki/Plugins
         ranger-fzf-filter
         ranger_devicons
+lesspipe.sh <- https://github.com/wofr06/lesspipe
+

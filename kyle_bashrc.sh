@@ -9,11 +9,14 @@ alias ra='ranger'
 alias bashrc_source='source ~/.bashrc'
 alias ..='c ..'
 
+export LESSOPEN="|/usr/local/bin/lesspipe.sh %s"
+export LESSCOLORIZER="bat"
+
 export RANGER_LOAD_DEFAULT_RC=FALSE
 
-[ -f ~/.fzf.bash ] && source ~/.fzf.bash
-source ~/tools/fzf-git.sh/fzf-git.sh
-source ~/tools/devtool_config/kyle_fzf.bash
+[ -f ~/.fzf.bash ] && source ~/.fzf.bash || echo missing \~/.fzf.bash
+[ -f ~/tools/fzf-git.sh/fzf-git.sh ] && source ~/tools/fzf-git.sh/fzf-git.sh || echo \~/tools/fzf-git.sh/fzf-git.sh
+[ -f ~/tools/devtool_config/kyle_fzf.bash ] && source ~/tools/devtool_config/kyle_fzf.bash || echo missing \~/tools/devtool_config/kyle_fzf.bash
 
 # for git checkout <commit>
 function gcoc() {
