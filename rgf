@@ -26,6 +26,17 @@
 #    keep this behaviour to provide the ability to filter over filenames
 
 
+KEY_BINDING=$(cat << EOF
+key-bindings:
+    Ctrl+Space  toggle between rg and fzf
+    Ctrl+F      search in current mattching records, could fail if the number of records is too large
+    Ctrl+/      change preview window position or close it
+    Enter       use 'less' or vscode to peek the current record
+    Alt-Enter   print the selected records to CLI
+
+EOF
+)
+
 show_help() {
     cat << EOF
 Interactive Ripgrep / FZF
@@ -56,15 +67,9 @@ but some other options such as rg's "--fixed-strings" will have no effect on fzf
     -z-*| -z--*      fzf options, e.g., rgf -z+i => fzf +i # fzf case sensitive mode, see man fzf
     -*|--*           rg options, e.g., rgf --glob='*.c' # glob will be parsed by rg, see man rg
 
-
-key-bindings:
-    ctrl+space  toggle between rg and fzf
-    ctrl+f      search in current mattching records, could fail if the number of records is too large
-    ctrl+/      change preview window position or close it
-    enter       use 'less' to open the current record
-    alt-enter   print the selected records to CLI
-
 EOF
+    echo "$KEY_BINDING"
+    echo
     exit 0
 }
 
@@ -174,7 +179,7 @@ main() {
         --nth=$N_TH \
         \
         --prompt "${prefix}${START_PROMPT}> " \
-        --header 'CTRL-Space: toggle rg/fzf, CTRL-F: nested search' \
+        --header 'Ctrl-Space: toggle rg/fzf, Ctrl-F: nested search, Ctrl-H: help' \
         \
         --bind "start:reload($RG_PREFIX $START_SEARCH $file_path || echo $NOT_FOUND_MSG)$UNBIND_CHANGE" \
         --bind "change:reload:sleep 0.1; ([[ {q} =~ ^! ]] && $RG_PREFIX -v \"\$(echo {q} | sed -E -e 's/^!//')\" $file_path || $RG_PREFIX {q} $file_path) || echo $NOT_FOUND_MSG" \
@@ -186,6 +191,7 @@ main() {
                 echo \"disable-search+rebind(change)+reload($RG_PREFIX \\{q} $file_path || echo $NOT_FOUND_MSG)+change-prompt(${prefix}rg> )\" ||
                 echo \"unbind(change)+reload($RG_PREFIX '' $file_path )+change-prompt(${prefix}fzf> )+enable-search\" " \
         --bind "ctrl-f:select-all+execute($PREFIX_SETUP ; printf '%s\n' {+} | rgf --PREFIX \"${prefix}\$new_prefix\" --PASS-THROUGH $PASS_THROUGH_FILE $PASS_THROUGH_OPT )+clear-selection" \
+        --bind "ctrl-h:execute:echo \"$KEY_BINDING\" | less" \
         \
         --preview "bat $BAT_STYLE --terminal-width \$FZF_PREVIEW_COLUMNS --force-colorization $PREVIEW_FILE --highlight-line $LINE_NUM 2>/dev/null || fzf_previewer {}" \
         --preview-window "up,80%,border-bottom,wrap,+$LINE_NUM+3/3$PREVIEW_HEADER_LINE" \
