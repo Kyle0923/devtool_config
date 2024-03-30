@@ -28,11 +28,14 @@
 
 KEY_BINDING=$(cat << EOF
 key-bindings:
-    Ctrl+Space  toggle between rg and fzf
-    Ctrl+F      search in current mattching records, could fail if the number of records is too large
-    Ctrl+/      change preview window position or close it
-    Enter       use 'less' or vscode to peek the current record
-    Alt-Enter   print the selected records to CLI
+    Ctrl+Space            toggle between rg and fzf
+    Ctrl+F                search in current mattching records, could fail if the number of records is too large
+    Ctrl+/                change preview window position or close it
+    Ctrl+D                clear query
+    Enter                 use 'less' or vscode to peek the current record
+    Alt-Enter             print the selected records to CLI
+    Alt+Left / Alt+Right  go to the begining / end of query prompt
+    Alt+Up / Alt+down     scroll preview window
 
 EOF
 )
@@ -191,7 +194,10 @@ main() {
                 echo \"disable-search+rebind(change)+reload($RG_PREFIX \\{q} $file_path || echo $NOT_FOUND_MSG)+change-prompt(${prefix}rg> )\" ||
                 echo \"unbind(change)+reload($RG_PREFIX '' $file_path )+change-prompt(${prefix}fzf> )+enable-search\" " \
         --bind "ctrl-f:select-all+execute($PREFIX_SETUP ; printf '%s\n' {+} | rgf --PREFIX \"${prefix}\$new_prefix\" --PASS-THROUGH $PASS_THROUGH_FILE $PASS_THROUGH_OPT )+clear-selection" \
+        --bind "ctrl-d:clear-query" \
         --bind "ctrl-h:execute:echo \"$KEY_BINDING\" | less" \
+        --bind "alt-left:beginning-of-line,alt-right:end-of-line" \
+        --bind "alt-up:preview-up,alt-down:preview-down" \
         \
         --preview "bat $BAT_STYLE --terminal-width \$FZF_PREVIEW_COLUMNS --force-colorization $PREVIEW_FILE --highlight-line $LINE_NUM 2>/dev/null || fzf_previewer {}" \
         --preview-window "up,80%,border-bottom,wrap,+$LINE_NUM+3/3$PREVIEW_HEADER_LINE" \
