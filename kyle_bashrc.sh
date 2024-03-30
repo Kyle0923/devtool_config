@@ -61,16 +61,20 @@ function c() {
         builtin cd -
     elif [[ $1 == '..' ]] && [[ $# -gt 1 ]] ; then
         # support '.. .. ..' and '.. 3'
-        local prefix='.' ; shift
-        [[ $1 == '..' ]] && c ..$(printf "/%s" "$@") && return
-        [[ $1 =~ ^[0-9]+$ ]] && for counter in $(seq 1 $1); do prefix="$prefix/.."; done && c $prefix
+        shift
+        if [[ $1 =~ ^[0-9]+$ ]]; then
+            for counter in $(seq 1 $1); do local up_path="../$up_path"; done && c "$up_path"
+        else
+            c ..$(printf "/%s" "$@")
+        fi
         return
     elif [ -d $1 ] ; then
-        # argument is a directory
         builtin cd "$1"
-    else
-        # argument is not a directory
+    elif [ -f $1 ] ; then
+        echo "$1"
         builtin cd "$(dirname $1)"
+    else
+        echo c: "$1": No such file or directory
     fi
 }
 
