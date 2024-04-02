@@ -200,7 +200,7 @@ main() {
         --bind "ctrl-f:select-all+execute($PREFIX_SETUP ; printf '%s\n' {+} | rgf --PREFIX \"${prefix}\$new_prefix\" --PASS-THROUGH $PASS_THROUGH_FILE $PASS_THROUGH_OPT )+clear-selection" \
         --bind "ctrl-d:clear-query" \
         --bind "f1:execute:echo \"$KEY_BINDING\" | less" \
-        --bind "f12:execute:rgf --PREFIX '((new tab))' --PASS-THROUGH $PASS_THROUGH_FILE $PASS_THROUGH_OPT $file_path {3..}" \
+        --bind "f12:execute:rgf --PREFIX '((new tab))' --PASS-THROUGH $PASS_THROUGH_FILE $PASS_THROUGH_OPT $file_path {$N_TH}" \
         --bind "alt-left:beginning-of-line,alt-right:end-of-line" \
         --bind "alt-up:preview-up,alt-down:preview-down" \
         \
