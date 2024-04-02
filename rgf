@@ -36,6 +36,8 @@ key-bindings:
     Alt-Enter             print the selected records to CLI
     Alt+Left / Alt+Right  go to the begining / end of query prompt
     Alt+Up / Alt+down     scroll preview window
+    F1                    help
+    F12                   open a new tab and put current line in as the query
 
 EOF
 )
@@ -80,7 +82,7 @@ PASS_THROUGH_OPT=''
 SILENT=''
 FZF_OPT=""
 RG_PREFIX="rg --line-number --no-heading --color=always --smart-case"
-NOT_FOUND_MSG="[[ regex:/{q}/ not found ]]"
+NOT_FOUND_MSG="[[ regex:/\$FZF_QUERY/ not found ]]"
 PRETTY_BAT='bat --force-colorization --terminal-width $(tput cols) --paging=always'
 BAT_STYLE='--style=grid,numbers,header'
 PREVIEW_HEADER_LINE=',~3'
@@ -158,6 +160,7 @@ PASS_THROUGH_FILE="${PASS_THROUGH_FILE:='//'}" # provide a default value
 
 main() {
 
+    local file_path=''
     [ -f "$1" ] && file_path="'$1'" && shift
 
     local EXECUTE_PEEK_FILE=''
@@ -182,7 +185,7 @@ main() {
         --nth=$N_TH \
         \
         --prompt "${prefix}${START_PROMPT}> " \
-        --header 'Ctrl-Space: toggle rg/fzf, Ctrl-F: nested search, Ctrl-H: help' \
+        --header 'Ctrl-Space: toggle rg/fzf, Ctrl-F: nested search, F1: help' \
         \
         --bind "start:reload($RG_PREFIX $START_SEARCH $file_path || echo $NOT_FOUND_MSG)$UNBIND_CHANGE" \
         --bind "change:reload:sleep 0.1; ([[ {q} =~ ^! ]] && $RG_PREFIX -v \"\$(echo {q} | sed -E -e 's/^!//')\" $file_path || $RG_PREFIX {q} $file_path) || echo $NOT_FOUND_MSG" \
@@ -195,7 +198,8 @@ main() {
                 echo \"unbind(change)+reload($RG_PREFIX '' $file_path )+change-prompt(${prefix}fzf> )+enable-search\" " \
         --bind "ctrl-f:select-all+execute($PREFIX_SETUP ; printf '%s\n' {+} | rgf --PREFIX \"${prefix}\$new_prefix\" --PASS-THROUGH $PASS_THROUGH_FILE $PASS_THROUGH_OPT )+clear-selection" \
         --bind "ctrl-d:clear-query" \
-        --bind "ctrl-h:execute:echo \"$KEY_BINDING\" | less" \
+        --bind "f1:execute:echo \"$KEY_BINDING\" | less" \
+        --bind "f12:execute:rgf --PREFIX '((new tab))' --PASS-THROUGH $PASS_THROUGH_FILE $PASS_THROUGH_OPT $file_path {3..}" \
         --bind "alt-left:beginning-of-line,alt-right:end-of-line" \
         --bind "alt-up:preview-up,alt-down:preview-down" \
         \
