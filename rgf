@@ -86,7 +86,8 @@ NOT_FOUND_MSG="[[ regex:/\$FZF_QUERY/ not found ]]"
 PRETTY_BAT='bat --force-colorization --terminal-width $(tput cols) --paging=always'
 BAT_STYLE='--style=grid,numbers,header'
 PREVIEW_HEADER_LINE=',~3'
-PATTERN_SETUP="PATTERN=\$([ -z {q} ] && echo '' || [[ \$FZF_PROMPT =~ 'rg>' ]] && echo \"-p {q}\" | sed -E -e 's+\\\\d+[0-9]+' || echo \"-p \$(echo {q} | awk '{print \$NF}')\")"
+PATTERN_SETUP="PATTERN=\$([ -z {q} ] && echo '' || [[ \$FZF_PROMPT =~ 'rg>' ]] && echo \"-p {q}\" | sed -E -e 's+\\\\d+[0-9]+g' || \
+                echo \"-p \$(echo {q} | sed -E -e 's/\\s+/|/g' | sed -e 's/^|//; s/|$//')\")"
 PROMPT_SETUP="PROMPT=\$([[ \$FZF_PROMPT =~ 'rg>' ]] && echo 'rg:' || echo 'fzf:') "
 PREFIX_SETUP="$PROMPT_SETUP ; new_prefix=\$([ -z {q} ] && echo '' || echo [{q}]) ; echo \$PROMPT {q} "
 TRUNCATE_LINE="awk '{ if (length(\$0) > 201) print substr(\$0, 1, 201) \" [...]\"; else print \$0; }'"
