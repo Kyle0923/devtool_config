@@ -59,7 +59,8 @@ options:
 
     --rg            start in rg mode, default start up mode is fzf
 
-    --header [n]    freeze the first n line as header, n is default to 1 when not provided, e.g., ps -ef | rgf --header
+    --header [n]    freeze the first n line in preview window as header, n is default to 1 when not provided,
+                    e.g., 'ps -ef | rgf --header' freezes the first line in preview to provide column information
                     a convenient shothand for fzf's --header-lines option
 
     -s|--silent     useful when you want to pipe the search result to other command,
@@ -85,7 +86,8 @@ RG_PREFIX="rg --line-number --no-heading --color=always --smart-case"
 NOT_FOUND_MSG="[[ regex:/\$FZF_QUERY/ not found ]]"
 PRETTY_BAT='bat --force-colorization --terminal-width $(tput cols) --paging=always'
 BAT_STYLE='--style=grid,numbers,header'
-PREVIEW_HEADER_LINE=',~3'
+PREVIEW_HEADER_LINE_FILE=',~3'
+PREVIEW_HEADER_LINE_PIPE=''
 PATTERN_SETUP="PATTERN=\$([ -z {q} ] && echo '' || [[ \$FZF_PROMPT =~ 'rg>' ]] && echo \"-p {q}\" | sed -E -e 's+\\\\d+[0-9]+g' || \
                 echo \"-p \$(echo {q} | sed -E -e 's/\\s+/|/g' | sed -e 's/^|//; s/|$//')\")"
 PROMPT_SETUP="PROMPT=\$([[ \$FZF_PROMPT =~ 'rg>' ]] && echo 'rg:' || echo 'fzf:') "
@@ -94,8 +96,7 @@ TRUNCATE_LINE="awk '{ if (length(\$0) > 201) print substr(\$0, 1, 201) \" [...]\
 PREVIEW_FILE='{1}'
 LINE_NUM='{2}'
 N_TH='3..'
-HEADER_LINE='Ctrl-Space: toggle rg/fzf, Ctrl-F: nested search, F1: help'
-PREVIEW_HEADER=''
+HINT='Ctrl-Space: toggle rg/fzf, Ctrl-F: nested search, F1: help'
 CTX_SEARCH='FALSE'
 
 # for --rg
@@ -133,7 +134,7 @@ while [[ $# -gt 0 ]]; do
             else
                 ln=1
             fi
-            PREVIEW_HEADER=",~$((ln+1))"
+            PREVIEW_HEADER_LINE_PIPE=",~$((ln+1))"
             FZF_OPT="$FZF_OPT --header-lines $ln"
             ;;
         --PASS-THROUGH)
@@ -148,7 +149,7 @@ while [[ $# -gt 0 ]]; do
             shift
             CTX_SEARCH='TRUE'
             CTX_FZF_OPT="--preview-window=hidden --bind start:+unbind(ctrl-/,ctrl-f,f12)"
-            HEADER_LINE="Ctrl-D: clear query, Ctrl-Space: toggle fzf/rg"
+            HINT="Ctrl-D: clear query, Ctrl-Space: toggle fzf/rg"
             ;;
         -z-*|-z+*)
             FZF_OPT="$FZF_OPT ${1:2}" # remove -z part
@@ -199,7 +200,7 @@ main() {
         --nth=$N_TH \
         \
         --prompt "${prefix}${START_PROMPT}> " \
-        --header "$HEADER_LINE" \
+        --header "$HINT" \
         \
         --bind "start:reload($RG_PREFIX $START_SEARCH $file_path || echo $NOT_FOUND_MSG)$UNBIND_CHANGE" \
         --bind "change:reload:sleep 0.1; ([[ {q} =~ ^! ]] && $RG_PREFIX -v \"\$(echo {q} | sed -E -e 's/^!//')\" $file_path || $RG_PREFIX {q} $file_path) || echo $NOT_FOUND_MSG" \
@@ -218,7 +219,7 @@ main() {
         --bind "alt-up:preview-up,alt-down:preview-down" \
         \
         --preview "bat $BAT_STYLE --terminal-width \$FZF_PREVIEW_COLUMNS --force-colorization $PREVIEW_FILE --highlight-line $LINE_NUM 2>/dev/null || fzf_previewer {}" \
-        --preview-window "up,80%,border-bottom,wrap,+$LINE_NUM+3/3$PREVIEW_HEADER_LINE" \
+        --preview-window "up,80%,border-bottom,wrap,+$LINE_NUM+3/3$PREVIEW_HEADER_LINE_FILE" \
         \
         --bind "enter:$EXECUTE_PEEK_FILE" \
         --bind "alt-enter:become( [[ $PASS_THROUGH_FILE == '//' ]] && printf '%s\n' {+1..2} || printf '%s\n' {+2..} )" \
@@ -262,7 +263,7 @@ else
         fi
         # common when top level is pipe
         BAT_STYLE="--style=grid,numbers"
-        PREVIEW_HEADER_LINE="$PREVIEW_HEADER"
+        PREVIEW_HEADER_LINE_FILE="$PREVIEW_HEADER_LINE_PIPE"
         PREVIEW_FILE="$PASS_THROUGH_FILE"
         LINE_NUM='{1}'
         N_TH='2..'
