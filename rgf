@@ -28,16 +28,16 @@
 
 KEY_BINDING=$(cat << EOF
 key-bindings:
-    Ctrl+Space            toggle between rg and fzf
-    Ctrl+F                search in current mattching records, could fail if the number of records is too large
-    Ctrl+/                change preview window position or close it
-    Ctrl+D                clear query
-    Enter                 use 'less' or vscode to peek the current record
-    Alt-Enter             print the selected records to CLI
-    Alt+Left / Alt+Right  go to the begining / end of query prompt
-    Alt+Up / Alt+down     scroll preview window
-    F1                    help
-    F12                   open a new tab and put current line in as the query
+    F1                    Help
+    Ctrl+Space            Toggle between rg and fzf
+    Ctrl+F                Search in current mattching records, could fail if the number of records is too large
+    F12                   Search in file context. You can choose a line in the context and perform a search against the selected line
+    Ctrl+/                Change preview window position or close it
+    Ctrl+D                Clear query
+    Enter                 Use 'less' or Vscode to peek the current record
+    Alt-Enter             Print the selected records to CLI
+    Alt+Left / Alt+Right  Go to the begining / end of query prompt
+    Alt+Up / Alt+down     Scroll preview window
 
 EOF
 )
@@ -146,10 +146,17 @@ while [[ $# -gt 0 ]]; do
             shift 2
             ;;
         --context-search)
-            shift
+            CTX_LINE=$2
+            shift 2
+            second_last=$(( $# - 1 ))
+            CTX_FILE="${!second_last}"
             CTX_SEARCH='TRUE'
-            CTX_FZF_OPT="--preview-window=hidden --bind start:+unbind(ctrl-/,ctrl-f,f12)"
-            HINT="Ctrl-D: clear query, Ctrl-Space: toggle fzf/rg"
+            [[ ! $CTX_FILE =~ "/tmp/rg-fzf-pipe-" ]] && CTX_FILE_LABEL="--border=top --border-label-pos=2 --border-label=File:$CTX_FILE"
+
+            CTX_FZF_OPT="--preview-window=hidden --bind start:+unbind(ctrl-/,ctrl-f,f12,change,ctrl-space) --bind load:pos($CTX_LINE) --disabled --no-multi $CTX_FILE_LABEL"
+            NAV_CHANGE_QUERY="+transform(echo \"change-query(\$(echo {2..}))\")"
+            HINT="Edit line and hit Enter to search"
+            START_PROMPT="select context"
             ;;
         -z-*|-z+*)
             FZF_OPT="$FZF_OPT ${1:2}" # remove -z part
@@ -176,7 +183,7 @@ main() {
 
     local EXECUTE_PEEK_FILE=""
     if [[ $CTX_SEARCH == 'TRUE' ]]; then
-        EXECUTE_PEEK_FILE="become(echo {$N_TH})"
+        EXECUTE_PEEK_FILE="become(echo {q})"
     else
         if [[ $TERM_PROGRAM == 'vscode' ]]; then
             # use vscode
@@ -214,7 +221,7 @@ main() {
         --bind "ctrl-f:select-all+execute($PREFIX_SETUP ; printf '%s\n' {+} | rgf --PREFIX \"${prefix}\$new_prefix\" --PASS-THROUGH $PASS_THROUGH_FILE $PASS_THROUGH_OPT )+clear-selection" \
         --bind "ctrl-d:clear-query" \
         --bind "f1:execute:echo \"$KEY_BINDING\" | less" \
-        --bind "f12:execute(CTX_QUERY=\$(rgf --context-search --PREFIX '((context search))' --PASS-THROUGH $PASS_THROUGH_FILE $PASS_THROUGH_OPT $context_file {$N_TH}) && rgf --PREFIX '((new tab))' --PASS-THROUGH $PASS_THROUGH_FILE $PASS_THROUGH_OPT $file_path \$CTX_QUERY)" \
+        --bind "f12:execute(CTX_QUERY=\$(rgf --context-search $LINE_NUM --PASS-THROUGH $PASS_THROUGH_FILE $PASS_THROUGH_OPT $context_file {$N_TH}) && rgf --PREFIX '((context search))' --PASS-THROUGH $PASS_THROUGH_FILE $PASS_THROUGH_OPT $file_path \$CTX_QUERY)" \
         --bind "alt-left:beginning-of-line,alt-right:end-of-line" \
         --bind "alt-up:preview-up,alt-down:preview-down" \
         \
@@ -225,6 +232,7 @@ main() {
         --bind "alt-enter:become( [[ $PASS_THROUGH_FILE == '//' ]] && printf '%s\n' {+1..2} || printf '%s\n' {+2..} )" \
         $IS_FZF_DISABLED \
         $CTX_FZF_OPT \
+        --bind "up:up$NAV_CHANGE_QUERY" --bind "down:down$NAV_CHANGE_QUERY" \
         $FZF_OPT \
 
 } # end of main()
