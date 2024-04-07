@@ -94,7 +94,9 @@ TRUNCATE_LINE="awk '{ if (length(\$0) > 201) print substr(\$0, 1, 201) \" [...]\
 PREVIEW_FILE='{1}'
 LINE_NUM='{2}'
 N_TH='3..'
-HEADER_OPT=''
+HEADER_LINE='Ctrl-Space: toggle rg/fzf, Ctrl-F: nested search, F1: help'
+PREVIEW_HEADER=''
+CTX_SEARCH='FALSE'
 
 # for --rg
 IS_FZF_DISABLED=''
@@ -131,7 +133,7 @@ while [[ $# -gt 0 ]]; do
             else
                 ln=1
             fi
-            HEADER_OPT=",~$((ln+1))"
+            PREVIEW_HEADER=",~$((ln+1))"
             FZF_OPT="$FZF_OPT --header-lines $ln"
             ;;
         --PASS-THROUGH)
@@ -141,6 +143,12 @@ while [[ $# -gt 0 ]]; do
         --PREFIX)
             prefix="$2 && "
             shift 2
+            ;;
+        --context-search)
+            shift
+            CTX_SEARCH='TRUE'
+            CTX_FZF_OPT="--preview-window=hidden --bind start:+unbind(ctrl-/,ctrl-f,f12)"
+            HEADER_LINE="Ctrl-D: clear query, Ctrl-Space: toggle fzf/rg"
             ;;
         -z-*|-z+*)
             FZF_OPT="$FZF_OPT ${1:2}" # remove -z part
@@ -163,13 +171,18 @@ main() {
 
     local file_path=''
     [ -f "$1" ] && file_path="'$1'" && shift
+    local context_file="${file_path:-'{1}'}"
 
-    local EXECUTE_PEEK_FILE=''
-    if [[ $TERM_PROGRAM == 'vscode' ]]; then
-        # use vscode
-        EXECUTE_PEEK_FILE="execute-silent([[ {} != '$NOT_FOUND_MSG' ]] && code -g $PREVIEW_FILE:$LINE_NUM && echo peek: {} $SILENT | $TRUNCATE_LINE)"
+    local EXECUTE_PEEK_FILE=""
+    if [[ $CTX_SEARCH == 'TRUE' ]]; then
+        EXECUTE_PEEK_FILE="become(echo {$N_TH})"
     else
-        EXECUTE_PEEK_FILE="execute([[ {} != '$NOT_FOUND_MSG' ]] && $PATTERN_SETUP ; $PRETTY_BAT $PREVIEW_FILE --highlight-line $LINE_NUM --pager \"less -R +$LINE_NUM \$PATTERN\" 2>/dev/null && echo peek: {} $SILENT | $TRUNCATE_LINE)"
+        if [[ $TERM_PROGRAM == 'vscode' ]]; then
+            # use vscode
+            EXECUTE_PEEK_FILE="execute-silent([[ {} != '$NOT_FOUND_MSG' ]] && code -g $PREVIEW_FILE:$LINE_NUM && echo peek: {} $SILENT | $TRUNCATE_LINE)"
+        else
+            EXECUTE_PEEK_FILE="execute([[ {} != '$NOT_FOUND_MSG' ]] && $PATTERN_SETUP ; $PRETTY_BAT $PREVIEW_FILE --highlight-line $LINE_NUM --pager \"less -R +$LINE_NUM \$PATTERN\" 2>/dev/null && echo peek: {} $SILENT | $TRUNCATE_LINE)"
+        fi
     fi
 
     rm -f /tmp/rg-fzf-{r,f}
@@ -186,7 +199,7 @@ main() {
         --nth=$N_TH \
         \
         --prompt "${prefix}${START_PROMPT}> " \
-        --header 'Ctrl-Space: toggle rg/fzf, Ctrl-F: nested search, F1: help' \
+        --header "$HEADER_LINE" \
         \
         --bind "start:reload($RG_PREFIX $START_SEARCH $file_path || echo $NOT_FOUND_MSG)$UNBIND_CHANGE" \
         --bind "change:reload:sleep 0.1; ([[ {q} =~ ^! ]] && $RG_PREFIX -v \"\$(echo {q} | sed -E -e 's/^!//')\" $file_path || $RG_PREFIX {q} $file_path) || echo $NOT_FOUND_MSG" \
@@ -200,7 +213,7 @@ main() {
         --bind "ctrl-f:select-all+execute($PREFIX_SETUP ; printf '%s\n' {+} | rgf --PREFIX \"${prefix}\$new_prefix\" --PASS-THROUGH $PASS_THROUGH_FILE $PASS_THROUGH_OPT )+clear-selection" \
         --bind "ctrl-d:clear-query" \
         --bind "f1:execute:echo \"$KEY_BINDING\" | less" \
-        --bind "f12:execute:rgf --PREFIX '((new tab))' --PASS-THROUGH $PASS_THROUGH_FILE $PASS_THROUGH_OPT $file_path {$N_TH}" \
+        --bind "f12:execute(CTX_QUERY=\$(rgf --context-search --PREFIX '((context search))' --PASS-THROUGH $PASS_THROUGH_FILE $PASS_THROUGH_OPT $context_file {$N_TH}) && rgf --PREFIX '((new tab))' --PASS-THROUGH $PASS_THROUGH_FILE $PASS_THROUGH_OPT $file_path \$CTX_QUERY)" \
         --bind "alt-left:beginning-of-line,alt-right:end-of-line" \
         --bind "alt-up:preview-up,alt-down:preview-down" \
         \
@@ -210,11 +223,20 @@ main() {
         --bind "enter:$EXECUTE_PEEK_FILE" \
         --bind "alt-enter:become( [[ $PASS_THROUGH_FILE == '//' ]] && printf '%s\n' {+1..2} || printf '%s\n' {+2..} )" \
         $IS_FZF_DISABLED \
+        $CTX_FZF_OPT \
         $FZF_OPT \
 
-}
+} # end of main()
 
-if ! [ -p /dev/stdin ]; then
+
+if [[ $CTX_SEARCH == 'TRUE' ]]; then
+
+    BAT_STYLE="--style=grid,numbers"
+    LINE_NUM='{1}'
+    N_TH='2..'
+    main "$@"
+
+elif ! [ -p /dev/stdin ]; then
 
     # Run from cli
     [ -f "$1" ] && RG_PREFIX="$RG_PREFIX --with-filename"
@@ -240,7 +262,7 @@ else
         fi
         # common when top level is pipe
         BAT_STYLE="--style=grid,numbers"
-        PREVIEW_HEADER_LINE="$HEADER_OPT"
+        PREVIEW_HEADER_LINE="$PREVIEW_HEADER"
         PREVIEW_FILE="$PASS_THROUGH_FILE"
         LINE_NUM='{1}'
         N_TH='2..'
