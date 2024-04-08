@@ -152,11 +152,8 @@ while [[ $# -gt 0 ]]; do
             CTX_FILE="${!second_last}"
             CTX_SEARCH='TRUE'
             [[ ! $CTX_FILE =~ "/tmp/rg-fzf-pipe-" ]] && CTX_FILE_LABEL="--border=top --border-label-pos=2 --border-label=File:$CTX_FILE"
-
-            CTX_FZF_OPT="--preview-window=hidden --bind start:+unbind(ctrl-/,ctrl-f,f12,change,ctrl-space) --bind load:pos($CTX_LINE) --disabled --no-multi $CTX_FILE_LABEL"
-            NAV_CHANGE_QUERY="+transform(echo \"change-query(\$(echo {2..}))\")"
-            HINT="Edit line and hit Enter to search"
-            START_PROMPT="select context"
+            # options in CTX_FZF_OPT cannot contains whitespace, e.g, '--change-prompt(fzf> )' won't work
+            CTX_FZF_OPT="--bind start:+unbind(f12,change,ctrl-space,alt-enter) --bind load:pos($CTX_LINE)+change-preview-window(hidden) --disabled --no-multi $CTX_FILE_LABEL"
             ;;
         -z-*|-z+*)
             FZF_OPT="$FZF_OPT ${1:2}" # remove -z part
@@ -176,6 +173,12 @@ set -- "$@"
 PASS_THROUGH_FILE="${PASS_THROUGH_FILE:='//'}" # provide a default value
 
 main() {
+
+    if [[ $CTX_SEARCH != 'TRUE' ]]; then
+        CTRL_F_ACTION="select-all+execute($PREFIX_SETUP ; printf '%s\n' {+} | rgf --PREFIX \"${prefix}\$new_prefix\" --PASS-THROUGH $PASS_THROUGH_FILE $PASS_THROUGH_OPT)+clear-selection"
+        CTRL_D_ACTION="clear-query"
+        TAB_ACTION='toggle'
+    fi
 
     local file_path=''
     [ -f "$1" ] && file_path="'$1'" && shift
@@ -218,12 +221,13 @@ main() {
         --bind "ctrl-space:transform:[[ ! \$FZF_PROMPT =~ 'rg>' ]] &&
                 echo \"disable-search+rebind(change)+reload($RG_PREFIX \\{q} $file_path || echo $NOT_FOUND_MSG)+change-prompt(${prefix}rg> )\" ||
                 echo \"unbind(change)+reload($RG_PREFIX '' $file_path )+change-prompt(${prefix}fzf> )+enable-search\" " \
-        --bind "ctrl-f:select-all+execute($PREFIX_SETUP ; printf '%s\n' {+} | rgf --PREFIX \"${prefix}\$new_prefix\" --PASS-THROUGH $PASS_THROUGH_FILE $PASS_THROUGH_OPT )+clear-selection" \
-        --bind "ctrl-d:clear-query" \
+        --bind "ctrl-f:$CTRL_F_ACTION" \
+        --bind "ctrl-d:$CTRL_D_ACTION" \
         --bind "f1:execute:echo \"$KEY_BINDING\" | less" \
-        --bind "f12:execute(CTX_QUERY=\$(rgf --context-search $LINE_NUM --PASS-THROUGH $PASS_THROUGH_FILE $PASS_THROUGH_OPT $context_file {$N_TH}) && rgf --PREFIX '((context search))' --PASS-THROUGH $PASS_THROUGH_FILE $PASS_THROUGH_OPT $file_path \$CTX_QUERY)" \
+        --bind "f12:execute(CTX_QUERY=\$(rgf --context-search $LINE_NUM $context_file {$N_TH}) && rgf --PREFIX '((context search))' --rg --PASS-THROUGH $PASS_THROUGH_FILE $PASS_THROUGH_OPT $file_path \$CTX_QUERY)" \
         --bind "alt-left:beginning-of-line,alt-right:end-of-line" \
         --bind "alt-up:preview-up,alt-down:preview-down" \
+        --bind "tab:$TAB_ACTION" \
         \
         --preview "bat $BAT_STYLE --terminal-width \$FZF_PREVIEW_COLUMNS --force-colorization $PREVIEW_FILE --highlight-line $LINE_NUM 2>/dev/null || fzf_previewer {}" \
         --preview-window "up,80%,border-bottom,wrap,+$LINE_NUM+3/3$PREVIEW_HEADER_LINE_FILE" \
@@ -240,16 +244,34 @@ main() {
 
 if [[ $CTX_SEARCH == 'TRUE' ]]; then
 
-    BAT_STYLE="--style=grid,numbers"
     LINE_NUM='{1}'
     N_TH='2..'
+    START_PROMPT="select context"
+    HINT="Ctrl-F: turn on search, Ctrl-D: reset"
+    PREVIEW_FILE=$1
+    TAB_ACTION="transform-query(echo {2..})"
+    NAV_CHANGE_QUERY="+disable-search+transform-query(echo {2..})+change-prompt($START_PROMPT> )+change-header($HINT)"
+    CTRL_F_ACTION="clear-query+enable-search+change-prompt(Search enabled | fzf> )+change-preview-window(top,50%)+change-header(Ctrl-D: reset, Tab: copy selection)"
+    CTRL_D_ACTION="clear-query+enable-search+change-prompt(Search enabled | fzf> )+change-preview-window(hidden)+change-header(Ctrl-D: reset, Tab: copy selection)"
     main "$@"
 
 elif ! [ -p /dev/stdin ]; then
 
-    # Run from cli
-    [ -f "$1" ] && RG_PREFIX="$RG_PREFIX --with-filename"
-    main "$@"
+    # Run from cli or from context search
+    if [[ "$PASS_THROUGH_FILE" =~ "//" ]]; then
+        # top level input is not pipe
+        [ -f "$1" ] && RG_PREFIX="$RG_PREFIX --with-filename"
+        main "$@"
+    else
+        # context search when top level input from pipe
+        RG_PREFIX="$RG_PREFIX --no-filename"
+        BAT_STYLE="--style=grid,numbers"
+        PREVIEW_HEADER_LINE_FILE="$PREVIEW_HEADER_LINE_PIPE"
+        PREVIEW_FILE="$PASS_THROUGH_FILE"
+        LINE_NUM='{1}'
+        N_TH='2..'
+        main "$@"
+    fi
 
 else
 
@@ -260,11 +282,11 @@ else
 
     if [[ "$PASS_THROUGH_FILE" == '//' ]]; then
         # run in nested search mode
-        RG_PREFIX="$RG_PREFIX --no-filename --no-heading --no-line-number"
+        RG_PREFIX="$RG_PREFIX --no-filename --no-line-number"
     else
         if [[ "$PASS_THROUGH_FILE" =~ "/tmp/rg-fzf-pipe-" ]]; then
             # nested search mode when top level is pipe input
-            RG_PREFIX="$RG_PREFIX --no-filename --no-heading --no-line-number"
+            RG_PREFIX="$RG_PREFIX --no-filename --no-line-number"
         else
             # top level entry with input from pipe
             PASS_THROUGH_FILE="$TEMP_FILE"
