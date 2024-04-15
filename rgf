@@ -66,6 +66,11 @@ options:
     -s|--silent     useful when you want to pipe the search result to other command,
                     by default, rgf prints out the searching pattern or peeking file path to provide a trace
 
+    Case search sensitivity:
+        Default: Smart case     Searches case insensitively if the pattern is all lowercase. Search case sensitively otherwise.
+        -s|--case:              Search case sensitively
+        -i|--ignore-case:       Search case insensitively
+
 Other options are passed to the underlying rg and fzf
 !! IMPORTANT: for key-value options, use opt=value or the script may fail
 Note that fzf performs search on top of rg's result, thus --glob / --type will affect the searching pool for both fzf and rg
@@ -136,6 +141,18 @@ while [[ $# -gt 0 ]]; do
             fi
             PREVIEW_HEADER_LINE_PIPE=",~$((ln+1))"
             FZF_OPT="$FZF_OPT --header-lines $ln"
+            ;;
+        -i|--ignore-case)
+            shift
+            PASS_THROUGH_OPT="$PASS_THROUGH_OPT -i"
+            FZF_OPT="$FZF_OPT -i"
+            RG_PREFIX="$RG_PREFIX -i"
+            ;;
+        -s|--case)
+            shift
+            PASS_THROUGH_OPT="$PASS_THROUGH_OPT --case"
+            FZF_OPT="$FZF_OPT +i"
+            RG_PREFIX="$RG_PREFIX -s"
             ;;
         --PASS-THROUGH)
             PASS_THROUGH_FILE=$2
