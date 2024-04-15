@@ -57,7 +57,9 @@ In rg mode, you can use '!' to invert the search, e.g., rg> !foo will match anyt
 options:
     -h|--help       display this help message
 
-    --rg            start in rg mode, default start up mode is fzf
+    --rg            start in rg mode, this is default when searching all files under the directory
+
+    --fzf           start in fzf mode, this is default when searching in a particular file
 
     --header [n]    freeze the first n line in preview window as header, n is default to 1 when not provided,
                     e.g., 'ps -ef | rgf --header' freezes the first line in preview to provide column information
@@ -102,13 +104,26 @@ PREVIEW_FILE='{1}'
 LINE_NUM='{2}'
 N_TH='3..'
 HINT='Ctrl-Space: toggle rg/fzf, Ctrl-F: nested search, F1: help'
-CTX_SEARCH='FALSE'
+CTX_PEEK='FALSE'
 
-# for --rg
-IS_FZF_DISABLED=''
-UNBIND_CHANGE='+unbind(change)'
-START_PROMPT='fzf'
-START_SEARCH="''"
+start_with_fzf()
+{
+    IS_FZF_DISABLED=''
+    UNBIND_CHANGE='+unbind(change)'
+    START_PROMPT='fzf'
+    START_SEARCH="''"
+}
+
+start_with_rg()
+{
+    IS_FZF_DISABLED='--disabled'
+    UNBIND_CHANGE=''
+    START_PROMPT='rg'
+    START_SEARCH="{q}"
+}
+
+# default, start with fzf
+start_with_fzf
 
 # parse options
 while [[ $# -gt 0 ]]; do
@@ -118,12 +133,14 @@ while [[ $# -gt 0 ]]; do
             exit 0
             ;;
         --rg)
-            PASS_THROUGH_OPT="$PASS_THROUGH_OPT --rg"
-            IS_FZF_DISABLED='--disabled'
-            UNBIND_CHANGE=''
-            START_PROMPT='rg'
-            START_SEARCH="{q}"
             shift
+            PASS_THROUGH_OPT="$PASS_THROUGH_OPT --rg"
+            start_with_rg
+            ;;
+        --fzf)
+            shift
+            PASS_THROUGH_OPT="$PASS_THROUGH_OPT --fzf"
+            start_with_fzf
             ;;
         -s|--silent)
             PASS_THROUGH_OPT="$PASS_THROUGH_OPT -s"
@@ -162,12 +179,12 @@ while [[ $# -gt 0 ]]; do
             prefix="$2 && "
             shift 2
             ;;
-        --context-search)
+        --context-peek)
             CTX_LINE=$2
             shift 2
             second_last=$(( $# - 1 ))
             CTX_FILE="${!second_last}"
-            CTX_SEARCH='TRUE'
+            CTX_PEEK='TRUE'
             [[ ! $CTX_FILE =~ "/tmp/rg-fzf-pipe-" ]] && CTX_FILE_LABEL="--border=top --border-label-pos=2 --border-label=File:$CTX_FILE"
             # options in CTX_FZF_OPT cannot contains whitespace, e.g, '--change-prompt(fzf> )' won't work
             CTX_FZF_OPT="--bind start:+unbind(f12,change,ctrl-space,alt-enter) --bind load:pos($CTX_LINE)+change-preview-window(hidden) --disabled --no-multi $CTX_FILE_LABEL"
@@ -191,26 +208,23 @@ PASS_THROUGH_FILE="${PASS_THROUGH_FILE:='//'}" # provide a default value
 
 main() {
 
-    if [[ $CTX_SEARCH != 'TRUE' ]]; then
-        CTRL_F_ACTION="select-all+execute($PREFIX_SETUP ; printf '%s\n' {+} | rgf --PREFIX \"${prefix}\$new_prefix\" --PASS-THROUGH $PASS_THROUGH_FILE $PASS_THROUGH_OPT)+clear-selection"
-        CTRL_D_ACTION="clear-query"
-        TAB_ACTION='toggle'
-    fi
-
     local file_path=''
     [ -f "$1" ] && file_path="'$1'" && shift
     local context_file="${file_path:-'{1}'}"
 
     local EXECUTE_PEEK_FILE=""
-    if [[ $CTX_SEARCH == 'TRUE' ]]; then
-        EXECUTE_PEEK_FILE="become(echo {q})"
+    if [[ $TERM_PROGRAM == 'vscode' ]]; then
+        # use vscode
+        EXECUTE_PEEK_FILE="execute-silent([[ {} != '$NOT_FOUND_MSG' ]] && code -g $PREVIEW_FILE:$LINE_NUM && echo peek: {} $SILENT | $TRUNCATE_LINE)"
     else
-        if [[ $TERM_PROGRAM == 'vscode' ]]; then
-            # use vscode
-            EXECUTE_PEEK_FILE="execute-silent([[ {} != '$NOT_FOUND_MSG' ]] && code -g $PREVIEW_FILE:$LINE_NUM && echo peek: {} $SILENT | $TRUNCATE_LINE)"
-        else
-            EXECUTE_PEEK_FILE="execute([[ {} != '$NOT_FOUND_MSG' ]] && $PATTERN_SETUP ; $PRETTY_BAT $PREVIEW_FILE --highlight-line $LINE_NUM --pager \"less -R +$LINE_NUM \$PATTERN\" 2>/dev/null && echo peek: {} $SILENT | $TRUNCATE_LINE)"
-        fi
+        EXECUTE_PEEK_FILE="execute([[ {} != '$NOT_FOUND_MSG' ]] && $PATTERN_SETUP ; $PRETTY_BAT $PREVIEW_FILE --highlight-line $LINE_NUM --pager \"less -R +$LINE_NUM \$PATTERN\" 2>/dev/null && echo peek: {} $SILENT | $TRUNCATE_LINE)"
+    fi
+
+    if [[ $CTX_PEEK == 'TRUE' ]]; then
+        CTRL_F_ACTION="select-all+execute($PREFIX_SETUP ; printf '%s\n' {+} | rgf --PREFIX \"${prefix}\$new_prefix\" --PASS-THROUGH $PASS_THROUGH_FILE $PASS_THROUGH_OPT)+clear-selection"
+        CTRL_D_ACTION="clear-query"
+        TAB_ACTION='toggle'
+        EXECUTE_PEEK_FILE="become(echo {q})" # override 'enter' action
     fi
 
     rm -f /tmp/rg-fzf-{r,f}
@@ -241,7 +255,7 @@ main() {
         --bind "ctrl-f:$CTRL_F_ACTION" \
         --bind "ctrl-d:$CTRL_D_ACTION" \
         --bind "f1:execute:echo \"$KEY_BINDING\" | less" \
-        --bind "f12:execute(CTX_QUERY=\$(rgf --context-search $LINE_NUM $context_file {$N_TH}) && rgf --PREFIX '((context search))' --rg --PASS-THROUGH $PASS_THROUGH_FILE $PASS_THROUGH_OPT $file_path \$CTX_QUERY)" \
+        --bind "f12:execute(CTX_QUERY=\$(rgf --context-peek $LINE_NUM $context_file {$N_TH}) && rgf --PREFIX '((context search))' --rg --PASS-THROUGH $PASS_THROUGH_FILE $PASS_THROUGH_OPT $file_path \$CTX_QUERY)" \
         --bind "alt-left:beginning-of-line,alt-right:end-of-line" \
         --bind "alt-up:preview-up,alt-down:preview-down" \
         --bind "tab:$TAB_ACTION" \
@@ -259,8 +273,9 @@ main() {
 } # end of main()
 
 
-if [[ $CTX_SEARCH == 'TRUE' ]]; then
+if [[ $CTX_PEEK == 'TRUE' ]]; then
 
+    # run in context peek (first stage of F12)
     LINE_NUM='{1}'
     N_TH='2..'
     START_PROMPT="select context"
@@ -274,10 +289,17 @@ if [[ $CTX_SEARCH == 'TRUE' ]]; then
 
 elif ! [ -p /dev/stdin ]; then
 
-    # Run from cli or from context search
+    # Run from cli or second stage of context search
+
     if [[ "$PASS_THROUGH_FILE" =~ "//" ]]; then
         # top level input is not pipe
-        [ -f "$1" ] && RG_PREFIX="$RG_PREFIX --with-filename"
+        if [ -f "$1" ]; then
+            # search in a pariticular file
+            RG_PREFIX="$RG_PREFIX --with-filename"
+        else
+            # search in all files, start with rg for best performance unless --fzf is used
+            [[ ! $PASS_THROUGH_OPT =~ '--fzf' ]] && start_with_rg
+        fi
         main "$@"
     else
         # context search when top level input from pipe
