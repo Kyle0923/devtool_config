@@ -220,11 +220,15 @@ main() {
         EXECUTE_PEEK_FILE="execute([[ {} != '$NOT_FOUND_MSG' ]] && $PATTERN_SETUP ; $PRETTY_BAT $PREVIEW_FILE --highlight-line $LINE_NUM --pager \"less -R +$LINE_NUM \$PATTERN\" 2>/dev/null && echo peek: {} $SILENT | $TRUNCATE_LINE)"
     fi
 
+    CTRL_F_ACTION="select-all+execute($PREFIX_SETUP ; printf '%s\n' {+} | rgf --PREFIX \"${prefix}\$new_prefix\" --PASS-THROUGH $PASS_THROUGH_FILE $PASS_THROUGH_OPT)+clear-selection"
+    CTRL_D_ACTION="clear-query"
+    TAB_ACTION='toggle'
+
     if [[ $CTX_PEEK == 'TRUE' ]]; then
-        CTRL_F_ACTION="select-all+execute($PREFIX_SETUP ; printf '%s\n' {+} | rgf --PREFIX \"${prefix}\$new_prefix\" --PASS-THROUGH $PASS_THROUGH_FILE $PASS_THROUGH_OPT)+clear-selection"
-        CTRL_D_ACTION="clear-query"
-        TAB_ACTION='toggle'
-        EXECUTE_PEEK_FILE="become(echo {q})" # override 'enter' action
+        EXECUTE_PEEK_FILE="become(echo {q})"
+        CTRL_F_ACTION="clear-query+enable-search+change-prompt(Search enabled | fzf> )+change-preview-window(top,50%)+change-header(Ctrl-D: reset, Tab: copy selection)"
+        CTRL_D_ACTION="clear-query+enable-search+change-prompt(Search enabled | fzf> )+change-preview-window(hidden)+change-header(Ctrl-D: reset, Tab: copy selection)"
+        TAB_ACTION="transform-query(echo {2..})"
     fi
 
     rm -f /tmp/rg-fzf-{r,f}
@@ -281,10 +285,7 @@ if [[ $CTX_PEEK == 'TRUE' ]]; then
     START_PROMPT="select context"
     HINT="Ctrl-F: turn on search, Ctrl-D: reset"
     PREVIEW_FILE=$1
-    TAB_ACTION="transform-query(echo {2..})"
     NAV_CHANGE_QUERY="+disable-search+transform-query(echo {2..})+change-prompt($START_PROMPT> )+change-header($HINT)"
-    CTRL_F_ACTION="clear-query+enable-search+change-prompt(Search enabled | fzf> )+change-preview-window(top,50%)+change-header(Ctrl-D: reset, Tab: copy selection)"
-    CTRL_D_ACTION="clear-query+enable-search+change-prompt(Search enabled | fzf> )+change-preview-window(hidden)+change-header(Ctrl-D: reset, Tab: copy selection)"
     main "$@"
 
 elif ! [ -p /dev/stdin ]; then
@@ -320,7 +321,7 @@ else
     cat > $TEMP_FILE
 
     if [[ "$PASS_THROUGH_FILE" == '//' ]]; then
-        # run in nested search mode
+        # nested search mode when top level is a file or not specified
         RG_PREFIX="$RG_PREFIX --no-filename --no-line-number"
     else
         if [[ "$PASS_THROUGH_FILE" =~ "/tmp/rg-fzf-pipe-" ]]; then
