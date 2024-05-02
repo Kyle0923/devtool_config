@@ -7,7 +7,7 @@ alias crepo='cd $REPO_ROOT'
 alias rp='realpath'
 alias ra='ranger'
 alias bashrc_source='source ~/.bashrc'
-alias ..='c ..'
+alias ..='cdup'
 
 export LESSOPEN="|/usr/local/bin/lesspipe.sh %s"
 export LESSCOLORIZER="bat"
@@ -44,11 +44,61 @@ parse_git_branch() {
     git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/ (\1)/'
 }
 
+# when PS1 is too long, prompt starts in next line
+handle_long_ps1() {
+    local input=$(echo $1 | sed -e "s,$HOME,~,")
+    local length=${#input}
+    local terminal_width=$(tput cols)
+    local max_length=$(( terminal_width * 2 / 3 ))
+    if [[ $length -gt $max_length ]]; then
+        echo -e "$input\n$ "
+    else
+        echo "$input $ "
+    fi
+}
+
 if [ ! -e '/.dockerenv' ]; then
-    export PS1="\u@\h \[\033[32m\]\w\[\033[33m\]\$(parse_git_branch)\[\033[00m\] $ "
+    export PS1="\$(handle_long_ps1 '\u@\h \[\033[32m\]\w\[\033[33m\]$(parse_git_branch)\[\033[00m\]')"
 else
-    export PS1="\[\e[44m\]\u@\h\[\e[0m\] \[\033[32m\]\w\[\033[33m\]\$(parse_git_branch)\[\033[00m\] $ "
+    export PS1="\$(handle_long_ps1 '\[\e[44m\]\u@\h\[\e[0m\] \[\033[32m\]\w\[\033[33m\]$(parse_git_branch)\[\033[00m\]')"
 fi
+
+# cd up the dir tree
+function cdup() {
+    if [ $# -eq 0 ] ; then
+        cd ..
+        return
+    fi
+
+    # support '.. .. ..', '.. 3' and '.. workspace # cd up to workspace'
+    if [[ $1 =~ ^[0-9]+$ ]]; then
+        # .. 3 => cd ../../..
+        local counter;
+        for counter in $(seq 1 $1); do local dest="../$dest"; done && c "$dest"
+    elif [[ $1 == '..' ]]; then
+        # .. .. .. => cd ../../..
+        c ..$(printf "/%s" "$@")
+    else
+        # .. workspace => cd [...]/workspace
+        local CWD=`pwd | sed -e "s,$HOME,~,"`
+        local filter_path=`echo $CWD | sed -e 's,/,\n,g' | \
+            fzf --ansi --header $CWD --reverse --height="20%" -1 --exact -q "$*" \
+                --bind "focus:transform-header([[ {} == '~' ]] && echo '~' || echo '$CWD' | sed -e 's,/{}/.*,/{},')"`
+        if [[ -z "$filter_path" ]]; then
+            return
+        fi
+
+        if [[ $filter_path == '~' ]]; then
+            cd
+            return
+        fi
+
+        local dest=`echo $CWD | sed -e "s,/$filter_path/.*,/$filter_path," | sed -e "s,~,$HOME,"`
+        echo $dest
+        cd $dest
+
+    fi
+}
 
 # supercharged cd
 function c() {
@@ -59,15 +109,6 @@ function c() {
         [[ -n $CD_PATH ]] && c $CD_PATH
     elif [ $1 == '-' ] ; then
         builtin cd -
-    elif [[ $1 == '..' ]] && [[ $# -gt 1 ]] ; then
-        # support '.. .. ..' and '.. 3'
-        shift
-        if [[ $1 =~ ^[0-9]+$ ]]; then
-            for counter in $(seq 1 $1); do local up_path="../$up_path"; done && c "$up_path"
-        else
-            c ..$(printf "/%s" "$@")
-        fi
-        return
     elif [ -d $1 ] ; then
         builtin cd "$1"
     elif [ -f $1 ] ; then

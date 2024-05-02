@@ -271,7 +271,7 @@ main() {
         --bind "alt-enter:become( [[ $PASS_THROUGH_FILE == '//' ]] && printf '%s\n' {+1..2} || printf '%s\n' {+2..} )" \
         $IS_FZF_DISABLED \
         $CTX_FZF_OPT \
-        --bind "up:up$NAV_CHANGE_QUERY" --bind "down:down$NAV_CHANGE_QUERY" \
+        --bind "focus:$NAV_CHANGE_QUERY" \
         $FZF_OPT \
 
 } # end of main()
@@ -285,7 +285,7 @@ if [[ $CTX_PEEK == 'TRUE' ]]; then
     START_PROMPT="select context"
     HINT="Ctrl-F: turn on search, Ctrl-D: reset"
     PREVIEW_FILE=$1
-    NAV_CHANGE_QUERY="+disable-search+transform-query(echo {2..})+change-prompt($START_PROMPT> )+change-header($HINT)"
+    NAV_CHANGE_QUERY="disable-search+transform-query(echo {2..})+change-prompt($START_PROMPT> )+change-header($HINT)"
     main "$@"
 
 elif ! [ -p /dev/stdin ]; then
