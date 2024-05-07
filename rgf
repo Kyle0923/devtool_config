@@ -65,7 +65,7 @@ options:
                     e.g., 'ps -ef | rgf --header' freezes the first line in preview to provide column information
                     a convenient shothand for fzf's --header-lines option
 
-    -s|--silent     useful when you want to pipe the search result to other command,
+    -q|--quiet      useful when you want to pipe the search result to other command,
                     by default, rgf prints out the searching pattern or peeking file path to provide a trace
 
     Case search sensitivity:
@@ -142,7 +142,7 @@ while [[ $# -gt 0 ]]; do
             PASS_THROUGH_OPT="$PASS_THROUGH_OPT --fzf"
             start_with_fzf
             ;;
-        -s|--silent)
+        -q|--quiet)
             PASS_THROUGH_OPT="$PASS_THROUGH_OPT -s"
             SILENT='>/dev/null'
             PREFIX_SETUP="$PREFIX_SETUP $SILENT"
