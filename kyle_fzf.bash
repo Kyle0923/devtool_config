@@ -93,10 +93,10 @@ _fzf_complete_c() {
     --border-label-pos=2 \
     --border-label "`pwd`" \
     --prompt="`pwd | sed -E -e 's+^\/\$++'`/" \
-    --header 'Alt-Enter: accept path; CTRL-W: go up; Alt-A: show all files' \
+    --header 'Alt-Enter: accept path; CTRL-W: go up; Alt-A: show all files; Alt-D: show all dir; Alt-Q: restore to default' \
     --preview "echo \$FZF_PROMPT{} | $TRIM_LS_SYMBOL | xargs fzf_previewer" \
     \
-    --bind "start:reload(ls -a -F . | tail -n +3)" \
+    --bind "start:reload(ls --color=always -a -F . | tail -n +3)" \
     --bind 'change:first' \
     --bind='ctrl-/:change-preview-window(down,50%,border-top|hidden|)' \
     --bind "enter:transform:$ENTER_DIR" \
@@ -110,7 +110,9 @@ _fzf_complete_c() {
             echo forward-char" \
     --bind "ctrl-w:transform:[[ \$(echo \$FZF_PROMPT{}) != '/' ]] &&
             echo \"change-prompt(\$(dirname \$FZF_PROMPT | sed -E -e 's+^\/\$++')/)+reload(ls -a -F \$(dirname \$FZF_PROMPT) | tail -n +3)+clear-query\"" \
-    --bind "alt-a:reload(cd \$FZF_PROMPT && fd -I | xargs ls -F -d | sed -E -e 's+^./++')" \
+    --bind "alt-a:reload(cd \$FZF_PROMPT && fd -HI | sed -e 's,/$,,' | xargs ls --color=always -F -d)" \
+    --bind "alt-d:reload(cd \$FZF_PROMPT && fd -HI --type d | sed -e 's,/$,,' | xargs ls --color=always -F -d)" \
+    --bind "alt-q:reload(ls --color=always -F -a \$FZF_PROMPT | tail -n +3)" \
     --bind "alt-enter:transform:echo \"become(echo \$FZF_PROMPT)\"" \
     --bind "alt-left:beginning-of-line,alt-right:end-of-line" \
     --bind "alt-up:preview-up,alt-down:preview-down" \
@@ -133,10 +135,10 @@ fzf_interactive_cd() {
     --border-label-pos=2 \
     --border-label "`pwd`" \
     --prompt="`pwd | sed -E -e 's+^\/\$++'`/" \
-    --header 'Alt-Enter: accept path; CTRL-W: go up; Alt-A: show all files' \
+    --header 'Alt-Enter: accept path; CTRL-W: go up; Alt-A: show all files; Alt-D: show all dir; Alt-Q: restore to default' \
     --preview "echo \$FZF_PROMPT{} | $TRIM_LS_SYMBOL | xargs fzf_previewer" \
     \
-    --bind "start:reload(ls -a -F . | tail -n +3)" \
+    --bind "start:reload(ls --color=always -a -F . | tail -n +3)" \
     --bind 'change:first' \
     --bind='ctrl-/:change-preview-window(down,50%,border-top|hidden|)' \
     --bind "enter:transform:$ENTER_DIR" \
@@ -150,7 +152,9 @@ fzf_interactive_cd() {
             echo forward-char" \
     --bind "ctrl-w:transform:[[ \$(echo \$FZF_PROMPT{}) != '/' ]] &&
             echo \"change-prompt(\$(dirname \$FZF_PROMPT | sed -E -e 's+^\/\$++')/)+reload(ls -a -F \$(dirname \$FZF_PROMPT) | tail -n +3)+clear-query\"" \
-    --bind "alt-a:reload(cd \$FZF_PROMPT && fd -I | xargs ls -F -d | sed -E -e 's+^./++')" \
+    --bind "alt-a:reload(cd \$FZF_PROMPT && fd -HI | sed -e 's,/$,,' | xargs ls --color=always -F -d)" \
+    --bind "alt-d:reload(cd \$FZF_PROMPT && fd -HI --type d | sed -e 's,/$,,' | xargs ls --color=always -F -d)" \
+    --bind "alt-q:reload(ls --color=always -F -a \$FZF_PROMPT | tail -n +3)" \
     --bind "alt-enter:transform:echo \"become(echo \$FZF_PROMPT)\"" \
     --bind "alt-left:beginning-of-line,alt-right:end-of-line" \
     --bind "alt-up:preview-up,alt-down:preview-down" \
