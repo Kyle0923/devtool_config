@@ -3,7 +3,7 @@
     "security.workspace.trust.untrustedFiles": "open",
     "[cpp]": {
         "editor.wordBasedSuggestions": "off",
-        "editor.suggest.insertMode": "replace",
+        "editor.suggest.insertMode": "insert",
         "editor.semanticHighlighting.enabled": true
     },
     "[python]": {
