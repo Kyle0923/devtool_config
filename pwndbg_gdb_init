@@ -1,8 +1,9 @@
 # rename to .gdbinit
-source /home/user/programming/pwndbg/gdbinit.py
+source /home/user/programming/pwndbg/gdbinit.py # pwndbg init file, update path to pwndbg dir
 set context-clear-screen on
 set follow-fork-mode parent
-source /home/user/programming/splitmind/gdbinit.py
+source /home/user/programming/splitmind/gdbinit.py # splitmind init file, update path to splitmind dir
+set context-source-code-lines 40
 python
 import splitmind
 (splitmind.Mind()
