@@ -106,7 +106,7 @@ function c() {
         # no arguments
         # source ranger
         local CD_PATH=`fzf_interactive_cd`
-        [[ -n $CD_PATH ]] && c $CD_PATH
+        [[ -n $CD_PATH ]] && echo "$CD_PATH" && c $CD_PATH
     elif [ $1 == '-' ] ; then
         builtin cd -
     elif [ -d $1 ] ; then
@@ -115,8 +115,13 @@ function c() {
         echo "$1"
         builtin cd "$(dirname $1)"
     else
-        local CD_PATH=`ls | fzf -1 -0 -q "$1"`
-        [[ -n $CD_PATH ]] && echo "$CD_PATH" && c $CD_PATH || echo "no match: $1"
+        local CD_PATH=`ls | fzf -f "$1"`
+        if [[ -n $CD_PATH && $(echo "$CD_PATH" | wc -l) -eq 1 ]]; then
+            echo "$CD_PATH" && cd $CD_PATH
+        else
+            local CD_PATH=`fzf_interactive_cd "$1"`
+            [[ -n $CD_PATH ]] && echo "$CD_PATH" && c $CD_PATH
+        fi
     fi
 }
 
