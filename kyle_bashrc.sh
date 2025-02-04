@@ -7,6 +7,7 @@ alias crepo='cd $REPO_ROOT'
 alias rp='realpath'
 alias ra='ranger'
 alias bashrc_source='source ~/.bashrc'
+alias c-='c -'
 alias ..='cdup'
 
 export LESSOPEN="|/usr/local/bin/lesspipe.sh %s"
