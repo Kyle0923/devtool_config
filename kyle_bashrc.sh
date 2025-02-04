@@ -115,7 +115,8 @@ function c() {
         echo "$1"
         builtin cd "$(dirname $1)"
     else
-        echo c: "$1": No such file or directory
+        local CD_PATH=`ls | fzf -1 -0 -q "$1"`
+        [[ -n $CD_PATH ]] && echo "$CD_PATH" && c $CD_PATH || echo "no match: $1"
     fi
 }
 
