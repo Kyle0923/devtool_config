@@ -19,7 +19,7 @@ if ! grep -q "source ~/tools/devtool_config/kyle_bashrc.sh" ~/.bashrc; then
 fi
 
 download_tool() {
-    local TEMP="~/tools/temp"
+    local TEMP="$HOME/tools/temp"
     mkdir -p $TEMP
     cd $TEMP
 
@@ -38,10 +38,10 @@ download_tool() {
 
     dir_name=$(basename $(ls -d */))
     cd $dir_name || return 1
-    ln -s $(realpath $tool) ~/.bin/
+    mv $tool $HOME/.bin/
     echo "Done installing $tool"
 
-    cd ~/tools
+    cd $HOME/tools
     rm -fr $TEMP
 }
 
