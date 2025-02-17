@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+RG_URL=
+FD_URL=
+BAT_URL=
+
 cd ~/tools/
 git clone https://github.com/junegunn/fzf.git
 git clone https://github.com/junegunn/fzf-git.sh.git
@@ -11,6 +15,37 @@ ln -s ~/tools/devtool_config/fzf_previewer ./
 
 [[ ":$PATH:" != *":$HOME/.bin:"* ]] && echo 'export PATH="$HOME/.bin:$PATH"' >> ~/.bashrc
 echo 'source /home/kyle/tools/devtool_config/kyle_bashrc.sh' >> ~/.bashrc
+
+download_tool() {
+    local TEMP="~/tools/temp"
+    mkdir -p $TEMP
+    cd $TEMP
+
+    local url=$1
+    local tool=$2
+
+    if [ -z "$url" ] || [ -z "$tool" ]; then
+        echo "URL for $tool not provided. Skipping..."
+        return 1
+    fi
+
+    echo "Downloading from $url..."
+
+    wget -q "$url" -O temp.tar.gz
+    tar -xzf temp.tar.gz
+
+    dir_name=$(basename $(ls -d */))
+    cd $dir_name || return 1
+    ln -s $(realpath $tool) ~/.bin/
+
+    cd ~/tools
+    rm -fr $TEMP
+}
+
+download_tool "$RG_URL" "rg"
+download_tool "$FD_URL" "fd"
+download_tool "$BAT_URL" "bat"
+
 
 echo ""
 echo "Done cloning FZF, FZF-git."
