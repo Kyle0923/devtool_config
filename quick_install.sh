@@ -14,7 +14,9 @@ ln -s ~/tools/devtool_config/rgf ./
 ln -s ~/tools/devtool_config/fzf_previewer ./
 
 [[ ":$PATH:" != *":$HOME/.bin:"* ]] && echo 'export PATH="$HOME/.bin:$PATH"' >> ~/.bashrc
-echo 'source /home/kyle/tools/devtool_config/kyle_bashrc.sh' >> ~/.bashrc
+if ! grep -q "source ~/tools/devtool_config/kyle_bashrc.sh" ~/.bashrc; then
+  echo "source ~/tools/devtool_config/kyle_bashrc.sh" >> ~/.bashrc
+fi
 
 download_tool() {
     local TEMP="~/tools/temp"
