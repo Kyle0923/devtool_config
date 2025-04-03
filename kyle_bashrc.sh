@@ -46,9 +46,9 @@ parse_git_branch() {
 }
 
 parse_git_branch_with_arrow() {
-    local git_branch=$(git branch 2>/dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/(\1)/')
+    local git_branch=$(git branch 2>/dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/')
     if [[ -n "$git_branch" ]]; then
-        builtin echo -e "\001\e[43;32m\002\001\xEE\x82\002\xB0\001\e[43;30m\002 $git_branch \001\e[0;33m\002\001\xEE\x82\002\xB0\001\e[0m\002"
+        builtin echo -e "\001\e[43;32m\002\001\xEE\x82\002\xB0\001\e[43;30m\002 \001\xEE\x82\002\xA0 $git_branch \001\e[0;33m\002\001\xEE\x82\002\xB0\001\e[0m\002"
     else
         builtin echo -e "\001\e[0;32m\002\001\xEE\x82\002\xB0\001\e[0m\002"
     fi
