@@ -69,9 +69,9 @@ handle_long_ps1() {
 }
 
 if [ ! -e '/.dockerenv' ]; then
-    # export PS1='\[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}$(handle_long_ps1 "\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\[\033[33m\]$(parse_git_branch)\[\033[00m\]")'
-    # export PS1='\[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}$(handle_long_ps1 "\[\E[44m\E[30m\]\u@\h\[\E[42m\E[34m\]\[\356\202\]\260\[\E[30m\]\w\[\E[43m\E[32m\]\[\356\202\]\260\[\E[43m\E[30m\]$(parse_git_branch)\[\E[0m\E[33m\]\[\356\202\]\260\[\E[0m\]")'
-    export PS1='\[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}$(handle_long_ps1 "\[\E[44m\E[30m\]\u@\h \[\E[42m\E[34m\]\[\356\202\]\260\[\E[30m\] \w $(parse_git_branch_with_arrow)\[\E[0m\]")'
+    export PS1='\[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}$(handle_long_ps1 "\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\[\033[33m\]$(parse_git_branch)\[\033[00m\]")'
+    ## export PS1='\[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}$(handle_long_ps1 "\[\E[44m\E[30m\]\u@\h\[\E[42m\E[34m\]\[\356\202\]\260\[\E[30m\]\w\[\E[43m\E[32m\]\[\356\202\]\260\[\E[43m\E[30m\]$(parse_git_branch)\[\E[0m\E[33m\]\[\356\202\]\260\[\E[0m\]")'
+    # export PS1='\[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}$(handle_long_ps1 "\[\E[44m\E[30m\]\u@\h \[\E[42m\E[34m\]\[\356\202\]\260\[\E[30m\] \w $(parse_git_branch_with_arrow)\[\E[0m\]")'
 else
     export PS1="\$(handle_long_ps1 \"\[\e[44m\]\u@\h\[\e[0m\] \[\033[32m\]\w\[\033[33m\]\$(parse_git_branch)\[\033[00m\]\")"
 fi
