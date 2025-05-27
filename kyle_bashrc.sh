@@ -37,7 +37,7 @@ function gcob() {
         local dest=`_fzf_git_branches --no-multi`
         [[ -n "$dest" ]] && git checkout $dest
     else
-        git checkout $(git branch | fzf -f "$@")
+        git checkout $(git branch | fzf -f "$@") --
     fi
 }
 
